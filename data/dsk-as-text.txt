@@ -1,0 +1,279 @@
+Tekst kart © Wizards of the Coast. Dane: Scryfall API (bez grafik).
+Parametr ?as=text na stronie zestawu nie zwraca pełnej bazy — to jest zrzut z API.
+Pobrano: 2026-10-10T18:57:09.932Z
+Acrobatic Cheerleader | {1}{W} | Creature — Human Survivor | common
+Cult Healer | {2}{W} | Creature — Human Doctor | common
+Dazzling Theater // Prop Room | {3}{W} // {2}{W} | Enchantment — Room // Enchantment — Room | rare
+Dollmaker's Shop // Porcelain Gallery | {1}{W} // {4}{W}{W} | Enchantment — Room // Enchantment — Room | mythic
+Emerge from the Cocoon | {4}{W} | Sorcery | common
+Enduring Innocence | {1}{W}{W} | Enchantment Creature — Sheep Glimmer | rare
+Ethereal Armor | {W} | Enchantment — Aura | uncommon
+Exorcise | {1}{W} | Sorcery | uncommon
+Fear of Abduction | {4}{W}{W} | Enchantment Creature — Nightmare | uncommon
+Fear of Immobility | {4}{W} | Enchantment Creature — Nightmare | common
+Fear of Surveillance | {1}{W} | Enchantment Creature — Nightmare | common
+Friendly Ghost | {3}{W} | Creature — Spirit | common
+Ghostly Dancers | {3}{W}{W} | Creature — Spirit | rare
+Glimmer Seeker | {2}{W} | Creature — Human Survivor | uncommon
+Grand Entryway // Elegant Rotunda | {1}{W} // {2}{W} | Enchantment — Room // Enchantment — Room | common
+Hardened Escort | {2}{W} | Creature — Human Soldier | common
+Jump Scare | {W} | Instant | common
+Leyline of Hope | {2}{W}{W} | Enchantment | rare
+Lionheart Glimmer | {3}{W}{W} | Enchantment Creature — Cat Glimmer | uncommon
+Living Phone | {2}{W} | Artifact Creature — Toy | common
+Optimistic Scavenger | {W} | Creature — Human Scout | uncommon
+Orphans of the Wheat | {1}{W} | Creature — Human | uncommon
+Overlord of the Mistmoors | {5}{W}{W} | Enchantment Creature — Avatar Horror | mythic
+Patched Plaything | {2}{W} | Artifact Creature — Toy | uncommon
+Possessed Goat | {W} | Creature — Goat | common
+Reluctant Role Model | {1}{W} | Creature — Human Survivor | rare
+Savior of the Small | {3}{W} | Creature — Kor Survivor | uncommon
+Seized from Slumber | {4}{W} | Instant | common
+Shardmage's Rescue | {W} | Enchantment — Aura | uncommon
+Sheltered by Ghosts | {1}{W} | Enchantment — Aura | uncommon
+Shepherding Spirits | {4}{W}{W} | Creature — Spirit | common
+Split Up | {1}{W}{W} | Sorcery | rare
+Splitskin Doll | {1}{W} | Artifact Creature — Toy | uncommon
+Surgical Suite // Hospital Room | {1}{W} // {3}{W} | Enchantment — Room // Enchantment — Room | uncommon
+Toby, Beastie Befriender | {2}{W} | Legendary Creature — Human Wizard | rare
+Trapped in the Screen | {2}{W} | Enchantment | common
+Unidentified Hovership | {1}{W}{W} | Artifact — Vehicle | rare
+Unsettling Twins | {3}{W} | Creature — Human | common
+Unwanted Remake | {W} | Instant | uncommon
+Veteran Survivor | {W} | Creature — Human Survivor | uncommon
+The Wandering Rescuer | {3}{W}{W} | Legendary Creature — Human Samurai Noble | mythic
+Abhorrent Oculus | {2}{U} | Creature — Eye | mythic
+Bottomless Pool // Locker Room | {U} // {4}{U} | Enchantment — Room // Enchantment — Room | uncommon
+Central Elevator // Promising Stairs | {3}{U} // {2}{U} | Enchantment — Room // Enchantment — Room | rare
+Clammy Prowler | {3}{U} | Enchantment Creature — Horror | common
+Creeping Peeper | {1}{U} | Creature — Eye | common
+Cursed Windbreaker | {2}{U} | Artifact — Equipment | uncommon
+Daggermaw Megalodon | {4}{U}{U} | Creature — Shark | common
+Don't Make a Sound | {1}{U} | Instant | common
+Duskmourn's Domination | {4}{U}{U} | Enchantment — Aura | uncommon
+Enduring Curiosity | {2}{U}{U} | Enchantment Creature — Cat Glimmer | rare
+Enter the Enigma | {U} | Sorcery | common
+Entity Tracker | {2}{U} | Creature — Human Scout | rare
+Erratic Apparition | {2}{U} | Creature — Spirit | common
+Fear of Failed Tests | {4}{U} | Enchantment Creature — Nightmare | uncommon
+Fear of Falling | {3}{U}{U} | Enchantment Creature — Nightmare | uncommon
+Fear of Impostors | {1}{U}{U} | Enchantment Creature — Nightmare | uncommon
+Fear of Isolation | {1}{U} | Enchantment Creature — Nightmare | uncommon
+Floodpits Drowner | {1}{U} | Creature — Merfolk | uncommon
+Get Out | {U}{U} | Instant | uncommon
+Ghostly Keybearer | {3}{U} | Creature — Spirit | uncommon
+Glimmerburst | {3}{U} | Instant | common
+Leyline of Transformation | {2}{U}{U} | Enchantment | rare
+Marina Vendrell's Grimoire | {5}{U} | Legendary Artifact — Book | rare
+Meat Locker // Drowned Diner | {2}{U} // {3}{U}{U} | Enchantment — Room // Enchantment — Room | common
+The Mindskinner | {U}{U}{U} | Legendary Enchantment Creature — Nightmare | rare
+Mirror Room // Fractured Realm | {2}{U} // {5}{U}{U} | Enchantment — Room // Enchantment — Room | mythic
+Overlord of the Floodpits | {3}{U}{U} | Enchantment Creature — Avatar Horror | mythic
+Paranormal Analyst | {1}{U} | Creature — Human Detective | uncommon
+Piranha Fly | {1}{U} | Creature — Fish Insect | common
+Scrabbling Skullcrab | {U} | Creature — Crab Skeleton | uncommon
+Silent Hallcreeper | {1}{U} | Enchantment Creature — Horror | rare
+Stalked Researcher | {1}{U} | Creature — Human Wizard | common
+Stay Hidden, Stay Silent | {1}{U} | Enchantment — Aura | uncommon
+The Tale of Tamiyo | {2}{U} | Legendary Enchantment — Saga | rare
+Tunnel Surveyor | {2}{U} | Creature — Human Detective | common
+Twist Reality | {1}{U}{U} | Instant | common
+Unable to Scream | {U} | Enchantment — Aura | common
+Underwater Tunnel // Slimy Aquarium | {U} // {3}{U} | Enchantment — Room // Enchantment — Room | common
+Unnerving Grasp | {2}{U} | Sorcery | uncommon
+Unwilling Vessel | {2}{U} | Creature — Human Wizard | uncommon
+Vanish from Sight | {3}{U} | Instant | common
+Appendage Amalgam | {2}{B} | Enchantment Creature — Horror | common
+Balemurk Leech | {1}{B} | Creature — Leech | common
+Cackling Slasher | {3}{B} | Creature — Human Assassin | common
+Come Back Wrong | {2}{B} | Sorcery | rare
+Commune with Evil | {2}{B} | Sorcery | uncommon
+Cracked Skull | {2}{B} | Enchantment — Aura | common
+Cynical Loner | {1}{B} | Creature — Human Survivor | uncommon
+Dashing Bloodsucker | {3}{B} | Creature — Vampire Warrior | uncommon
+Defiled Crypt // Cadaver Lab | {3}{B} // {B} | Enchantment — Room // Enchantment — Room | uncommon
+Demonic Counsel | {1}{B} | Sorcery | rare
+Derelict Attic // Widow's Walk | {2}{B} // {3}{B} | Enchantment — Room // Enchantment — Room | common
+Doomsday Excruciator | {B}{B}{B}{B}{B}{B} | Creature — Demon | rare
+Enduring Tenacity | {2}{B}{B} | Enchantment Creature — Snake Glimmer | rare
+Fanatic of the Harrowing | {3}{B} | Creature — Human Cleric | common
+Fear of Lost Teeth | {B} | Enchantment Creature — Nightmare | common
+Fear of the Dark | {4}{B} | Enchantment Creature — Nightmare | common
+Final Vengeance | {B} | Sorcery | common
+Funeral Room // Awakening Hall | {2}{B} // {6}{B}{B} | Enchantment — Room // Enchantment — Room | mythic
+Give In to Violence | {1}{B} | Instant | common
+Grievous Wound | {3}{B}{B} | Enchantment — Aura | rare
+Innocuous Rat | {1}{B} | Creature — Rat | common
+Killer's Mask | {2}{B} | Artifact — Equipment | uncommon
+Let's Play a Game | {3}{B} | Sorcery | uncommon
+Leyline of the Void | {2}{B}{B} | Enchantment | rare
+Live or Die | {3}{B}{B} | Instant | uncommon
+Meathook Massacre II | {X}{X}{B}{B}{B}{B} | Legendary Enchantment | mythic
+Miasma Demon | {4}{B}{B} | Creature — Demon | uncommon
+Murder | {1}{B}{B} | Instant | common
+Nowhere to Run | {1}{B} | Enchantment | uncommon
+Osseous Sticktwister | {1}{B} | Artifact Creature — Scarecrow | uncommon
+Overlord of the Balemurk | {3}{B}{B} | Enchantment Creature — Avatar Horror | mythic
+Popular Egotist | {2}{B} | Creature — Human Rogue | uncommon
+Resurrected Cultist | {2}{B} | Creature — Human Cleric | common
+Spectral Snatcher | {4}{B}{B} | Creature — Spirit | common
+Sporogenic Infection | {1}{B} | Enchantment — Aura | uncommon
+Unholy Annex // Ritual Chamber | {2}{B} // {3}{B}{B} | Enchantment — Room // Enchantment — Room | rare
+Unstoppable Slasher | {2}{B} | Creature — Zombie Assassin | rare
+Valgavoth, Terror Eater | {6}{B}{B}{B} | Legendary Creature — Elder Demon | mythic
+Valgavoth's Faithful | {B} | Creature — Human Cleric | uncommon
+Vile Mutilator | {5}{B}{B} | Creature — Demon | uncommon
+Winter's Intervention | {1}{B} | Instant | common
+Withering Torment | {2}{B} | Instant | uncommon
+Bedhead Beastie | {4}{R}{R} | Creature — Beast | common
+Betrayer's Bargain | {1}{R} | Instant | uncommon
+Boilerbilges Ripper | {4}{R} | Creature — Human Assassin | common
+Chainsaw | {1}{R} | Artifact — Equipment | rare
+Charred Foyer // Warped Space | {3}{R} // {4}{R}{R} | Enchantment — Room // Enchantment — Room | mythic
+Clockwork Percussionist | {R} | Artifact Creature — Monkey Toy | common
+Cursed Recording | {2}{R}{R} | Artifact | rare
+Diversion Specialist | {3}{R} | Creature — Human Warrior | uncommon
+Enduring Courage | {2}{R}{R} | Enchantment Creature — Dog Glimmer | rare
+Fear of Being Hunted | {1}{R}{R} | Enchantment Creature — Nightmare | uncommon
+Fear of Burning Alive | {4}{R}{R} | Enchantment Creature — Nightmare | uncommon
+Fear of Missing Out | {1}{R} | Enchantment Creature — Nightmare | rare
+Glassworks // Shattered Yard | {2}{R} // {4}{R} | Enchantment — Room // Enchantment — Room | common
+Grab the Prize | {1}{R} | Sorcery | common
+Hand That Feeds | {1}{R} | Creature — Mutant | common
+Impossible Inferno | {4}{R} | Instant | common
+Infernal Phantom | {3}{R} | Creature — Spirit | uncommon
+Irreverent Gremlin | {1}{R} | Creature — Gremlin | uncommon
+Leyline of Resonance | {2}{R}{R} | Enchantment | rare
+Most Valuable Slayer | {3}{R} | Creature — Human Warrior | common
+Norin, Swift Survivalist | {R} | Legendary Creature — Human Coward | uncommon
+Overlord of the Boilerbilges | {4}{R}{R} | Enchantment Creature — Avatar Horror | mythic
+Painter's Studio // Defaced Gallery | {2}{R} // {1}{R} | Enchantment — Room // Enchantment — Room | uncommon
+Piggy Bank | {1}{R} | Artifact Creature — Boar Toy | uncommon
+Pyroclasm | {1}{R} | Sorcery | uncommon
+Ragged Playmate | {1}{R} | Artifact Creature — Toy | common
+Rampaging Soulrager | {2}{R} | Creature — Spirit | common
+Razorkin Hordecaller | {4}{R} | Creature — Human Clown Berserker | uncommon
+Razorkin Needlehead | {R}{R} | Creature — Human Assassin | rare
+Ripchain Razorkin | {3}{R} | Creature — Human Berserker | common
+The Rollercrusher Ride | {X}{2}{R} | Legendary Enchantment | mythic
+Scorching Dragonfire | {1}{R} | Instant | common
+Screaming Nemesis | {2}{R} | Creature — Spirit | mythic
+Ticket Booth // Tunnel of Hate | {2}{R} // {4}{R}{R} | Enchantment — Room // Enchantment — Room | common
+Trial of Agony | {R} | Sorcery | uncommon
+Turn Inside Out | {R} | Instant | common
+Untimely Malfunction | {1}{R} | Instant | uncommon
+Vengeful Possession | {2}{R} | Sorcery | uncommon
+Vicious Clown | {2}{R} | Creature — Human Clown | common
+Violent Urge | {R} | Instant | uncommon
+Waltz of Rage | {3}{R}{R} | Sorcery | rare
+Altanak, the Thrice-Called | {5}{G}{G} | Legendary Creature — Insect Beast | uncommon
+Anthropede | {3}{G} | Creature — Insect | common
+Balustrade Wurm | {3}{G}{G} | Creature — Wurm | rare
+Bashful Beastie | {4}{G} | Creature — Beast | common
+Break Down the Door | {2}{G} | Instant | uncommon
+Cathartic Parting | {1}{G} | Sorcery | uncommon
+Cautious Survivor | {3}{G} | Creature — Elf Survivor | common
+Coordinated Clobbering | {G} | Sorcery | uncommon
+Cryptid Inspector | {2}{G} | Creature — Elf Warrior | common
+Defiant Survivor | {2}{G} | Creature — Human Survivor | uncommon
+Enduring Vitality | {1}{G}{G} | Enchantment Creature — Elk Glimmer | rare
+Fear of Exposure | {2}{G} | Enchantment Creature — Nightmare | uncommon
+Flesh Burrower | {1}{G} | Creature — Insect | common
+Frantic Strength | {2}{G} | Enchantment — Aura | common
+Grasping Longneck | {2}{G} | Enchantment Creature — Horror | common
+Greenhouse // Rickety Gazebo | {2}{G} // {3}{G} | Enchantment — Room // Enchantment — Room | uncommon
+Hauntwoods Shrieker | {1}{G}{G} | Creature — Beast Mutant | mythic
+Hedge Shredder | {2}{G}{G} | Artifact — Vehicle | rare
+Horrid Vigor | {1}{G} | Instant | common
+House Cartographer | {1}{G} | Creature — Human Scout Survivor | uncommon
+Insidious Fungus | {G} | Creature — Fungus | uncommon
+Kona, Rescue Beastie | {3}{G} | Legendary Creature — Beast Survivor | rare
+Leyline of Mutation | {2}{G}{G} | Enchantment | rare
+Manifest Dread | {1}{G} | Sorcery | common
+Moldering Gym // Weight Room | {2}{G} // {5}{G} | Enchantment — Room // Enchantment — Room | common
+Monstrous Emergence | {1}{G} | Sorcery | common
+Omnivorous Flytrap | {2}{G} | Creature — Plant | rare
+Overgrown Zealot | {1}{G} | Creature — Elf Druid | uncommon
+Overlord of the Hauntwoods | {3}{G}{G} | Enchantment Creature — Avatar Horror | mythic
+Patchwork Beastie | {G} | Artifact Creature — Beast | uncommon
+Rootwise Survivor | {3}{G}{G} | Creature — Human Survivor | uncommon
+Say Its Name | {1}{G} | Sorcery | common
+Slavering Branchsnapper | {4}{G}{G} | Creature — Lizard | common
+Spineseeker Centipede | {2}{G} | Creature — Insect | common
+Threats Around Every Corner | {3}{G} | Enchantment | uncommon
+Twitching Doll | {1}{G} | Artifact Creature — Spider Toy | rare
+Tyvar, the Pummeler | {1}{G}{G} | Legendary Creature — Elf Warrior | mythic
+Under the Skin | {2}{G} | Sorcery | uncommon
+Valgavoth's Onslaught | {X}{X}{G} | Sorcery | rare
+Walk-In Closet // Forgotten Cellar | {2}{G} // {3}{G}{G} | Enchantment — Room // Enchantment — Room | mythic
+Wary Watchdog | {1}{G} | Creature — Dog | common
+Wickerfolk Thresher | {3}{G} | Artifact Creature — Scarecrow | uncommon
+Arabella, Abandoned Doll | {R}{W} | Legendary Artifact Creature — Toy | uncommon
+Baseball Bat | {G}{W} | Artifact — Equipment | uncommon
+Beastie Beatdown | {R}{G} | Sorcery | uncommon
+Broodspinner | {B}{G} | Creature — Spider | uncommon
+Disturbing Mirth | {B}{R} | Enchantment | uncommon
+Drag to the Roots | {2}{B}{G} | Instant | uncommon
+Fear of Infinity | {1}{U}{B} | Enchantment Creature — Nightmare | uncommon
+Gremlin Tamer | {W}{U} | Creature — Human Scout | uncommon
+Growing Dread | {G}{U} | Enchantment | uncommon
+Inquisitive Glimmer | {W}{U} | Enchantment Creature — Fox Glimmer | uncommon
+Intruding Soulrager | {U}{R} | Creature — Spirit | uncommon
+The Jolly Balloon Man | {1}{R}{W} | Legendary Creature — Human Clown | rare
+Kaito, Bane of Nightmares | {2}{U}{B} | Legendary Planeswalker — Kaito | mythic
+Marina Vendrell | {W}{U}{B}{R}{G} | Legendary Creature — Human Warlock | rare
+Midnight Mayhem | {2}{R}{W} | Sorcery | uncommon
+Nashi, Searcher in the Dark | {U}{B} | Legendary Creature — Rat Ninja Wizard | rare
+Niko, Light of Hope | {2}{W}{U} | Legendary Creature — Human Wizard | mythic
+Oblivious Bookworm | {G}{U} | Creature — Human Wizard | uncommon
+Peer Past the Veil | {2}{R}{G} | Instant | rare
+Restricted Office // Lecture Hall | {2}{W}{W} // {5}{U}{U} | Enchantment — Room // Enchantment — Room | rare
+Rip, Spawn Hunter | {2}{G}{W} | Legendary Creature — Human Survivor | rare
+Rite of the Moth | {1}{W}{B}{B} | Sorcery | uncommon
+Roaring Furnace // Steaming Sauna | {1}{R} // {3}{U}{U} | Enchantment — Room // Enchantment — Room | rare
+Sawblade Skinripper | {1}{B}{R} | Creature — Human Assassin | uncommon
+Shrewd Storyteller | {1}{G}{W} | Creature — Human Survivor | uncommon
+Shroudstomper | {3}{W}{W}{B}{B} | Creature — Elemental | uncommon
+Skullsnap Nuisance | {U}{B} | Creature — Insect Skeleton | uncommon
+Smoky Lounge // Misty Salon | {2}{R} // {3}{U} | Enchantment — Room // Enchantment — Room | uncommon
+The Swarmweaver | {2}{B}{G} | Legendary Artifact Creature — Scarecrow | rare
+Undead Sprinter | {B}{R} | Creature — Zombie | rare
+Victor, Valgavoth's Seneschal | {1}{W}{B} | Legendary Creature — Human Warlock | rare
+Wildfire Wickerfolk | {R}{G} | Artifact Creature — Scarecrow | uncommon
+Winter, Misanthropic Guide | {1}{B}{R}{G} | Legendary Creature — Human Warlock | rare
+Zimone, All-Questioning | {1}{G}{U} | Legendary Creature — Human Wizard | rare
+Attack-in-the-Box | {3} | Artifact Creature — Toy | uncommon
+Bear Trap | {1} | Artifact | common
+Conductive Machete | {4} | Artifact — Equipment | uncommon
+Dissection Tools | {5} | Artifact — Equipment | rare
+Found Footage | {1} | Artifact — Clue | common
+Friendly Teddy | {2} | Artifact Creature — Bear Toy | common
+Ghost Vacuum | {1} | Artifact | rare
+Glimmerlight | {2} | Artifact — Equipment | common
+Haunted Screen | {3} | Artifact | uncommon
+Keys to the House | {1} | Artifact | uncommon
+Malevolent Chandelier | {6} | Artifact Creature — Construct | common
+Marvin, Murderous Mimic | {2} | Legendary Artifact Creature — Toy | rare
+Saw | {2} | Artifact — Equipment | uncommon
+Abandoned Campground | — | Land | common
+Blazemire Verge | — | Land | rare
+Bleeding Woods | — | Land | common
+Etched Cornfield | — | Land | common
+Floodfarm Verge | — | Land | rare
+Gloomlake Verge | — | Land | rare
+Hushwood Verge | — | Land | rare
+Lakeside Shack | — | Land | common
+Murky Sewer | — | Land | common
+Neglected Manor | — | Land | common
+Peculiar Lighthouse | — | Land | common
+Raucous Carnival | — | Land | common
+Razortrap Gorge | — | Land | common
+Strangled Cemetery | — | Land | common
+Terramorphic Expanse | — | Land | common
+Thornspire Verge | — | Land | rare
+Valgavoth's Lair | — | Enchantment Land | rare
+Plains | — | Basic Land — Plains | common
+Island | — | Basic Land — Island | common
+Swamp | — | Basic Land — Swamp | common
+Mountain | — | Basic Land — Mountain | common
+Forest | — | Basic Land — Forest | common

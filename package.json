@@ -1,0 +1,14 @@
+{
+  "name": "mtg-winston",
+  "private": true,
+  "type": "module",
+  "description": "Lokalna gra Magic: The Gathering — sprawiedliwy Winston Cube (AFR, STX, DSK) przeciwko komputerowi.",
+  "scripts": {
+    "start": "node server.js",
+    "download": "node scripts/download-cards.js",
+    "text": "node scripts/export-text.js",
+    "coverage": "node scripts/coverage.js",
+    "sim": "node scripts/sim-matches.js",
+    "test": "node --test"
+  }
+}

@@ -1,0 +1,278 @@
+Tekst kart © Wizards of the Coast. Dane: Scryfall API (bez grafik).
+Parametr ?as=text na stronie zestawu nie zwraca pełnej bazy — to jest zrzut z API.
+Pobrano: 2026-10-10T18:57:09.932Z
+Environmental Sciences | {2} | Sorcery — Lesson | common
+Expanded Anatomy | {3} | Sorcery — Lesson | common
+Introduction to Annihilation | {5} | Sorcery — Lesson | common
+Introduction to Prophecy | {3} | Sorcery — Lesson | common
+Mascot Exhibition | {7} | Sorcery — Lesson | mythic
+Wandering Archaic // Explore the Vastlands | — | Creature — Avatar // Sorcery | rare
+Academic Probation | {1}{W} | Sorcery — Lesson | rare
+Ageless Guardian | {1}{W} | Creature — Spirit Soldier | common
+Beaming Defiance | {1}{W} | Instant | common
+Clever Lumimancer | {W} | Creature — Human Wizard | uncommon
+Combat Professor | {3}{W} | Creature — Bird Cleric | common
+Defend the Campus | {3}{W} | Instant | common
+Detention Vortex | {W} | Enchantment — Aura | uncommon
+Devastating Mastery | {2}{W}{W}{W}{W} | Sorcery | rare
+Dueling Coach | {3}{W} | Creature — Human Monk | uncommon
+Eager First-Year | {1}{W} | Creature — Human Wizard | common
+Elite Spellbinder | {2}{W} | Creature — Human Cleric | rare
+Expel | {2}{W} | Instant | common
+Guiding Voice | {W} | Sorcery | common
+Leonin Lightscribe | {1}{W} | Creature — Cat Cleric | rare
+Mavinda, Students' Advocate | {2}{W} | Legendary Creature — Bird Advisor | mythic
+Pilgrim of the Ages | {2}{W} | Creature — Spirit | common
+Pillardrop Rescuer | {4}{W} | Creature — Spirit Cleric | common
+Professor of Symbology | {1}{W} | Creature — Kor Cleric | uncommon
+Reduce to Memory | {1}{W}{W} | Sorcery — Lesson | uncommon
+Secret Rendezvous | {1}{W}{W} | Sorcery | uncommon
+Semester's End | {3}{W} | Instant | rare
+Show of Confidence | {1}{W} | Instant | uncommon
+Sparring Regimen | {2}{W} | Enchantment | rare
+Star Pupil | {W} | Creature — Human Wizard | common
+Stonebinder's Familiar | {W} | Creature — Spirit Dog | uncommon
+Stonerise Spirit | {1}{W} | Creature — Spirit Bird | common
+Strict Proctor | {1}{W} | Creature — Spirit Cleric | rare
+Study Break | {1}{W} | Instant | common
+Thunderous Orator | {1}{W} | Creature — Kor Wizard | uncommon
+Arcane Subtraction | {1}{U} | Instant | common
+Archmage Emeritus | {2}{U}{U} | Creature — Human Wizard | rare
+Burrog Befuddler | {1}{U} | Creature — Frog Wizard | common
+Bury in Books | {4}{U} | Instant | common
+Curate | {1}{U} | Instant | common
+Divide by Zero | {2}{U} | Instant | uncommon
+Dream Strix | {2}{U} | Creature — Bird Illusion | rare
+Frost Trickster | {2}{U} | Creature — Bird Wizard | common
+Ingenious Mastery | {X}{2}{U} | Sorcery | rare
+Kelpie Guide | {2}{U} | Creature — Beast | uncommon
+Mentor's Guidance | {2}{U} | Sorcery | uncommon
+Mercurial Transformation | {1}{U} | Sorcery — Lesson | uncommon
+Multiple Choice | {X}{U} | Sorcery | rare
+Pop Quiz | {2}{U} | Instant | common
+Reject | {1}{U} | Instant | common
+Resculpt | {1}{U} | Instant | common
+Serpentine Curve | {3}{U} | Sorcery | common
+Snow Day | {4}{U}{U} | Instant | uncommon
+Solve the Equation | {2}{U} | Sorcery | uncommon
+Soothsayer Adept | {1}{U} | Creature — Merfolk Wizard | common
+Symmetry Sage | {U} | Creature — Human Wizard | uncommon
+Teachings of the Archaics | {2}{U} | Sorcery — Lesson | rare
+Tempted by the Oriq | {1}{U}{U}{U} | Sorcery | rare
+Test of Talents | {1}{U} | Instant | uncommon
+Vortex Runner | {2}{U} | Creature — Human Wizard | common
+Waterfall Aerialist | {3}{U} | Creature — Djinn Wizard | common
+Wormhole Serpent | {4}{U} | Creature — Serpent | uncommon
+Arrogant Poet | {1}{B} | Creature — Human Warlock | common
+Baleful Mastery | {3}{B} | Instant | rare
+Brackish Trudge | {2}{B} | Creature — Fungus Beast | uncommon
+Callous Bloodmage | {2}{B} | Creature — Vampire Warlock | rare
+Confront the Past | {X}{B} | Sorcery — Lesson | rare
+Crushing Disappointment | {3}{B} | Instant | common
+Essence Infusion | {1}{B} | Sorcery | common
+Eyetwitch | {B} | Creature — Eye Bat | uncommon
+Flunk | {1}{B} | Instant | uncommon
+Go Blank | {2}{B} | Sorcery | uncommon
+Hunt for Specimens | {1}{B} | Sorcery | common
+Lash of Malice | {B} | Instant | common
+Leech Fanatic | {1}{B} | Creature — Human Warlock | common
+Mage Hunter | {3}{B} | Creature — Horror | uncommon
+Mage Hunters' Onslaught | {2}{B}{B} | Sorcery | common
+Necrotic Fumes | {1}{B}{B} | Sorcery — Lesson | uncommon
+Novice Dissector | {3}{B} | Creature — Troll Warlock | common
+Oriq Loremage | {2}{B}{B} | Creature — Human Warlock | rare
+Plumb the Forbidden | {1}{B} | Instant | uncommon
+Poet's Quill | {1}{B} | Artifact — Equipment | rare
+Professor Onyx | {4}{B}{B} | Legendary Planeswalker — Liliana | mythic
+Professor's Warning | {B} | Instant | common
+Promising Duskmage | {2}{B} | Creature — Human Warlock | common
+Sedgemoor Witch | {2}{B} | Creature — Human Warlock | rare
+Specter of the Fens | {3}{B} | Creature — Specter | common
+Tenured Inkcaster | {4}{B} | Creature — Vampire Warlock | uncommon
+Umbral Juke | {2}{B} | Instant | uncommon
+Unwilling Ingredient | {B} | Creature — Frog | common
+Academic Dispute | {R} | Instant | uncommon
+Ardent Dustspeaker | {4}{R} | Creature — Minotaur Shaman | uncommon
+Blood Age General | {1}{R} | Creature — Spirit Warrior | common
+Conspiracy Theorist | {1}{R} | Creature — Human Shaman | rare
+Crackle with Power | {X}{X}{X}{R}{R} | Sorcery | mythic
+Draconic Intervention | {2}{R}{R} | Sorcery | rare
+Dragon's Approach | {2}{R} | Sorcery | common
+Efreet Flamepainter | {3}{R} | Creature — Efreet Shaman | rare
+Enthusiastic Study | {2}{R} | Instant | common
+Explosive Welcome | {7}{R} | Instant | uncommon
+Fervent Mastery | {3}{R}{R} | Sorcery | rare
+First Day of Class | {1}{R} | Instant | common
+Fuming Effigy | {3}{R} | Creature — Spirit | common
+Grinning Ignus | {2}{R} | Creature — Elemental | uncommon
+Hall Monitor | {R} | Creature — Lizard Shaman | uncommon
+Heated Debate | {2}{R} | Instant | common
+Igneous Inspiration | {2}{R} | Sorcery | uncommon
+Illuminate History | {2}{R}{R} | Sorcery — Lesson | rare
+Illustrious Historian | {1}{R} | Creature — Human Shaman | common
+Mascot Interception | {3}{R} | Sorcery | uncommon
+Pigment Storm | {3}{R}{R} | Sorcery | common
+Pillardrop Warden | {3}{R} | Creature — Spirit Dwarf | common
+Retriever Phoenix | {3}{R} | Creature — Phoenix | rare
+Start from Scratch | {2}{R} | Sorcery — Lesson | uncommon
+Storm-Kiln Artist | {3}{R} | Creature — Dwarf Shaman | uncommon
+Sudden Breakthrough | {1}{R} | Instant | common
+Tome Shredder | {2}{R} | Creature — Wolf | common
+Twinscroll Shaman | {2}{R} | Creature — Dwarf Shaman | common
+Accomplished Alchemist | {3}{G} | Creature — Elf Druid | rare
+Basic Conjuration | {1}{G}{G} | Sorcery — Lesson | rare
+Bayou Groff | {1}{G} | Creature — Plant Dog | common
+Big Play | {1}{G} | Instant | common
+Bookwurm | {7}{G} | Creature — Wurm | uncommon
+Charge Through | {G} | Instant | common
+Containment Breach | {2}{G} | Sorcery — Lesson | uncommon
+Devouring Tendrils | {1}{G} | Sorcery | uncommon
+Dragonsguard Elite | {1}{G} | Creature — Human Druid | rare
+Ecological Appreciation | {X}{2}{G} | Sorcery | mythic
+Emergent Sequence | {1}{G} | Sorcery | uncommon
+Exponential Growth | {X}{X}{G}{G} | Sorcery | rare
+Field Trip | {2}{G} | Sorcery | common
+Fortifying Draught | {G} | Instant | uncommon
+Gnarled Professor | {2}{G}{G} | Creature — Treefolk Druid | rare
+Honor Troll | {2}{G} | Creature — Troll Druid | uncommon
+Karok Wrangler | {4}{G} | Creature — Elf Druid | uncommon
+Leyline Invocation | {5}{G} | Sorcery | common
+Mage Duel | {2}{G} | Sorcery | common
+Master Symmetrist | {2}{G}{G} | Creature — Rhino Druid | uncommon
+Overgrown Arch | {1}{G} | Creature — Plant Wall | uncommon
+Professor of Zoomancy | {3}{G} | Creature — Bear Druid | common
+Reckless Amplimancer | {1}{G} | Creature — Elf Druid | common
+Scurrid Colony | {1}{G} | Creature — Squirrel | common
+Spined Karok | {2}{G} | Creature — Crocodile | common
+Springmane Cervin | {2}{G} | Creature — Elk | common
+Tangletrap | {1}{G} | Instant | common
+Verdant Mastery | {5}{G} | Sorcery | rare
+Augmenter Pugilist // Echoing Equation | — | Creature — Troll Druid // Sorcery | rare
+Blex, Vexing Pest // Search for Blex | — | Legendary Creature — Pest // Sorcery | mythic
+Extus, Oriq Overlord // Awaken the Blood Avatar | — | Legendary Creature — Human Warlock // Sorcery | mythic
+Flamescroll Celebrant // Revel in Silence | — | Creature — Human Shaman // Instant | rare
+Jadzi, Oracle of Arcavios // Journey to the Oracle | — | Legendary Creature — Human Wizard // Sorcery | mythic
+Kianne, Dean of Substance // Imbraham, Dean of Theory | — | Legendary Creature — Elf Druid // Legendary Creature — Bird Wizard | rare
+Mila, Crafty Companion // Lukka, Wayward Bonder | — | Legendary Creature — Fox // Legendary Planeswalker — Lukka | mythic
+Pestilent Cauldron // Restorative Burst | — | Artifact // Sorcery | rare
+Plargg, Dean of Chaos // Augusta, Dean of Order | — | Legendary Creature — Orc Shaman // Legendary Creature — Human Cleric | rare
+Rowan, Scholar of Sparks // Will, Scholar of Frost | — | Legendary Planeswalker — Rowan // Legendary Planeswalker — Will | mythic
+Selfless Glyphweaver // Deadly Vanity | — | Creature — Human Cleric // Sorcery | rare
+Shaile, Dean of Radiance // Embrose, Dean of Shadow | — | Legendary Creature — Bird Cleric // Legendary Creature — Human Warlock | rare
+Torrent Sculptor // Flamethrower Sonata | — | Creature — Merfolk Wizard // Sorcery | rare
+Uvilda, Dean of Perfection // Nassari, Dean of Expression | — | Legendary Creature — Djinn Wizard // Legendary Creature — Efreet Shaman | rare
+Valentin, Dean of the Vein // Lisette, Dean of the Root | — | Legendary Creature — Vampire Warlock // Legendary Creature — Human Druid | rare
+Aether Helix | {3}{G}{U} | Sorcery | uncommon
+Beledros Witherbloom | {5}{B}{G} | Legendary Creature — Elder Dragon | mythic
+Biomathematician | {1}{G}{U} | Creature — Human Wizard | common
+Blade Historian | {R/W}{R/W}{R/W}{R/W} | Creature — Human Cleric | rare
+Blood Researcher | {1}{B}{G} | Creature — Vampire Druid | common
+Blot Out the Sky | {X}{W}{B} | Sorcery | mythic
+Body of Research | {G}{G}{G}{U}{U}{U} | Sorcery | mythic
+Closing Statement | {3}{W}{B} | Instant | uncommon
+Cram Session | {1}{B/G} | Sorcery | common
+Creative Outburst | {3}{U}{U}{R}{R} | Instant | uncommon
+Culling Ritual | {2}{B}{G} | Sorcery | rare
+Culmination of Studies | {X}{U}{R} | Sorcery | rare
+Daemogoth Titan | {B/G}{B/G}{B/G}{B/G} | Creature — Demon | rare
+Daemogoth Woe-Eater | {1}{B}{B/G}{G} | Creature — Demon | uncommon
+Deadly Brew | {B}{G} | Sorcery | uncommon
+Decisive Denial | {G}{U} | Instant | uncommon
+Dina, Soul Steeper | {B}{G} | Legendary Creature — Dryad Druid | uncommon
+Double Major | {G}{U} | Instant | rare
+Dramatic Finale | {W/B}{W/B}{W/B}{W/B} | Enchantment | rare
+Elemental Expressionist | {U/R}{U/R}{U/R}{U/R} | Creature — Orc Wizard | rare
+Elemental Masterpiece | {5}{U}{R} | Sorcery | common
+Elemental Summoning | {3}{U/R}{U/R} | Sorcery — Lesson | common
+Eureka Moment | {2}{G}{U} | Instant | common
+Exhilarating Elocution | {2}{W}{B} | Sorcery | common
+Expressive Iteration | {U}{R} | Sorcery | uncommon
+Fractal Summoning | {X}{G/U}{G/U} | Sorcery — Lesson | common
+Fracture | {W}{B} | Instant | uncommon
+Galazeth Prismari | {2}{U}{R} | Legendary Creature — Elder Dragon | mythic
+Golden Ratio | {1}{G}{U} | Sorcery | uncommon
+Harness Infinity | {1}{B}{B}{B}{G}{G}{G} | Instant | mythic
+Hofri Ghostforge | {3}{R}{W} | Legendary Creature — Dwarf Cleric | mythic
+Humiliate | {W}{B} | Sorcery | uncommon
+Infuse with Vitality | {B}{G} | Instant | common
+Inkling Summoning | {1}{W/B}{W/B} | Sorcery — Lesson | common
+Kasmina, Enigma Sage | {1}{G}{U} | Legendary Planeswalker — Kasmina | mythic
+Killian, Ink Duelist | {W}{B} | Legendary Creature — Human Warlock | uncommon
+Lorehold Apprentice | {R}{W} | Creature — Human Cleric | uncommon
+Lorehold Command | {3}{R}{W} | Instant | rare
+Lorehold Excavation | {R}{W} | Enchantment | uncommon
+Lorehold Pledgemage | {1}{R/W}{R/W} | Creature — Kor Shaman | common
+Maelstrom Muse | {1}{U}{U/R}{R} | Creature — Djinn Wizard | uncommon
+Magma Opus | {6}{U}{R} | Instant | mythic
+Make Your Mark | {R/W} | Instant | common
+Manifestation Sage | {G/U}{G/U}{G/U}{G/U} | Creature — Human Wizard | rare
+Moldering Karok | {2}{B}{G} | Creature — Zombie Crocodile | common
+Mortality Spear | {2}{B}{G} | Instant | uncommon
+Needlethorn Drake | {G}{U} | Creature — Drake | common
+Oggyar Battle-Seer | {3}{U}{R} | Creature — Ogre Shaman | common
+Owlin Shieldmage | {3}{W}{B} | Creature — Bird Warlock | common
+Pest Summoning | {1}{B/G}{B/G} | Sorcery — Lesson | common
+Practical Research | {3}{U}{R} | Instant | uncommon
+Prismari Apprentice | {U}{R} | Creature — Human Shaman | uncommon
+Prismari Command | {1}{U}{R} | Instant | rare
+Prismari Pledgemage | {U/R}{U/R} | Creature — Orc Wizard | common
+Quandrix Apprentice | {G}{U} | Creature — Human Wizard | uncommon
+Quandrix Command | {1}{G}{U} | Instant | rare
+Quandrix Cultivator | {1}{G}{G/U}{U} | Creature — Turtle Druid | uncommon
+Quandrix Pledgemage | {1}{G/U}{G/U} | Creature — Merfolk Druid | common
+Quintorius, Field Historian | {3}{R}{W} | Legendary Creature — Elephant Cleric | uncommon
+Radiant Scrollwielder | {2}{R}{W} | Creature — Dwarf Cleric | rare
+Reconstruct History | {2}{R}{W} | Sorcery | uncommon
+Relic Sloth | {3}{R}{W} | Creature — Sloth Beast | common
+Returned Pastcaller | {3}{R}{R/W}{W} | Creature — Spirit Cleric | uncommon
+Rip Apart | {R}{W} | Sorcery | uncommon
+Rise of Extus | {4}{W/B}{W/B} | Sorcery | common
+Rootha, Mercurial Artist | {1}{U}{R} | Legendary Creature — Orc Shaman | uncommon
+Rushed Rebirth | {B}{G} | Instant | rare
+Shadewing Laureate | {W}{W/B}{B} | Creature — Human Warlock | uncommon
+Shadrix Silverquill | {3}{W}{B} | Legendary Creature — Elder Dragon | mythic
+Silverquill Apprentice | {W}{B} | Creature — Human Warlock | uncommon
+Silverquill Command | {2}{W}{B} | Sorcery | rare
+Silverquill Pledgemage | {1}{W/B}{W/B} | Creature — Vampire Cleric | common
+Silverquill Silencer | {W}{B} | Creature — Human Cleric | rare
+Spectacle Mage | {1}{U}{R} | Creature — Bird Shaman | common
+Spirit Summoning | {1}{R/W}{R/W} | Sorcery — Lesson | common
+Spiteful Squad | {2}{W}{B} | Creature — Human Warlock | common
+Square Up | {1}{G/U} | Instant | common
+Stonebound Mentor | {1}{R}{W} | Creature — Spirit Advisor | common
+Tanazir Quandrix | {3}{G}{U} | Legendary Creature — Elder Dragon | mythic
+Teach by Example | {U/R}{U/R} | Instant | common
+Tend the Pests | {B}{G} | Instant | uncommon
+Thrilling Discovery | {R}{W} | Sorcery | common
+Vanishing Verse | {W}{B} | Instant | rare
+Velomachus Lorehold | {5}{R}{W} | Legendary Creature — Elder Dragon | mythic
+Venerable Warsinger | {1}{R}{W} | Creature — Spirit Cleric | rare
+Witherbloom Apprentice | {B}{G} | Creature — Human Druid | uncommon
+Witherbloom Command | {B}{G} | Sorcery | rare
+Witherbloom Pledgemage | {3}{B/G}{B/G} | Creature — Treefolk Warlock | common
+Zimone, Quandrix Prodigy | {G}{U} | Legendary Creature — Human Wizard | uncommon
+Biblioplex Assistant | {4} | Artifact Creature — Gargoyle | common
+Campus Guide | {2} | Artifact Creature — Golem | common
+Codie, Vociferous Codex | {3} | Legendary Artifact Creature — Book Construct | rare
+Cogwork Archivist | {6} | Artifact Creature — Construct | common
+Excavated Wall | {1} | Artifact Creature — Wall | common
+Letter of Acceptance | {3} | Artifact | common
+Reflective Golem | {3} | Artifact Creature — Golem | uncommon
+Spell Satchel | {2} | Artifact | uncommon
+Strixhaven Stadium | {3} | Artifact | rare
+Team Pennant | {1} | Artifact — Equipment | uncommon
+Zephyr Boots | {1} | Artifact — Equipment | uncommon
+Access Tunnel | — | Land | uncommon
+Archway Commons | — | Land | common
+The Biblioplex | — | Land | rare
+Frostboil Snarl | — | Land | rare
+Furycalm Snarl | — | Land | rare
+Hall of Oracles | — | Land | rare
+Lorehold Campus | — | Land | common
+Necroblossom Snarl | — | Land | rare
+Prismari Campus | — | Land | common
+Quandrix Campus | — | Land | common
+Shineshadow Snarl | — | Land | rare
+Silverquill Campus | — | Land | common
+Vineglimmer Snarl | — | Land | rare
+Witherbloom Campus | — | Land | common
