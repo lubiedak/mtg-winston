@@ -1,0 +1,21 @@
+node_modules/
+*.log
+.env*
+
+# Grafiki kart (materiały WotC) — pobierane skryptami npm run art / art:large / deck-art
+public/art/
+
+# Zapisy użytkowników (drafty, importy CubeCobra)
+data/drafts/
+data/imports/
+
+# Wyniki symulacji (npm run sim)
+results/
+
+# Zrzuty tekstowe generowane z data/cards.json (npm run text)
+data/*-oracle.txt
+data/*-as-text.txt
+
+# Python
+__pycache__/
+*.pyc
