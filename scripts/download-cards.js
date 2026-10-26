@@ -3,7 +3,8 @@
  *
  * Strona Scryfalla z ?as=text zwraca listę nazw (format talii), bez tekstu zasad.
  * Silnik gry potrzebuje oracle text, więc właściwa baza to API /cards/search.
- * Miniatury biorą się z pola image_uris.small (oficjalny adres Scryfalla).
+ * Miniatury biorą się z pola image_uris.small, a potem
+ * scripts/download-art.js zapisuje je w public/art i podmienia adresy.
  * Zrzut samych nazw robi `npm run text`, nie widok HTML ?as=text.
  *
  * Limit Scryfalla: 2 żądania / s na /cards/search. Między żądaniami jest 600 ms.
@@ -11,6 +12,7 @@
 import { writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { localizeArt } from './download-art.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dataDir = path.join(root, 'data');
@@ -171,7 +173,7 @@ async function main() {
     source: 'https://api.scryfall.com/cards/search',
     sets: ['afr', 'stx', 'dsk'],
     fetched_at: new Date().toISOString(),
-    note: 'Tekst kart © Wizards of the Coast. Dane i miniatury: Scryfall (image_uris.small). Do prywatnej gry lokalnej.',
+    note: 'Tekst kart © Wizards of the Coast. Dane: Scryfall. Miniatury są lokalną kopią image_uris.small w public/art. Do prywatnej gry lokalnej.',
     cards: playable,
     extras,
     basics,
@@ -182,7 +184,8 @@ async function main() {
   console.log(`Zapisano ${playable.length} kart + ${extras.length} dodatków → ${out}`);
 
   const withImage = playable.filter((card) => card.image).length;
-  console.log(`Miniatury: ${withImage}/${playable.length}. Zrzut tekstu: npm run text.`);
+  console.log(`Adresy miniaturek: ${withImage}/${playable.length}. Zapis lokalny: public/art.`);
+  await localizeArt();
 }
 
 main().catch((err) => {
