@@ -1,11 +1,23 @@
-import { catalogFromData } from '/src/catalog.js';
-import { buildCube, CUBE_SETS } from '/src/cube.js';
-import { createDraft, applyDraft, pileKnown, knownInPool } from '/src/winston.js';
-import { actor, apply, cardView, createGame, legalTargets, registerCatalog, STEP_LABEL, STEPS } from '/src/engine.js';
-import { buildDeck, chooseAction, chooseDraft, engineMark, fallback } from '/src/ai.js';
-import { COLOR_NAME, mulberry32, RARITY_NAME } from '/src/util.js';
-import { getLang, setLang, t } from '/src/i18n.js';
-import { polishCard } from '/src/pltext.js';
+import { catalogFromData } from './src/catalog.js';
+import { buildCube, CUBE_SETS, rarityTargets } from './src/cube.js';
+import { createDraft, applyDraft, pileKnown, knownInPool } from './src/winston.js';
+import { applyGrid, createGrid, gridLines, gridPackCount } from './src/grid.js';
+import { choiceNote, manualBasics } from './src/lands.js';
+import { parseCard } from './src/parse.js';
+import { actor, apply, cardView, legalTargets, STEP_LABEL, STEPS } from './src/engine.js';
+import { chooseDraft, engineMark } from './src/ai.js';
+import { COLOR_NAME, mulberry32, RARITY_NAME, shuffle } from './src/util.js';
+import { getLang, setLang, t } from './src/i18n.js';
+import { polishCard } from './src/pltext.js';
+import { isDraftId, newDraftId, packSession, unpackSession } from './src/session.js';
+
+const APP_ROOT = new URL('./', import.meta.url);
+
+function appUrl(path) {
+  if (!path) return path;
+  if (/^(https?:|data:)/i.test(path)) return path;
+  return new URL(String(path).replace(/^\//, ''), APP_ROOT).href;
+}
 
 const app = document.querySelector('#app');
 const DIFFS = [
@@ -17,24 +29,56 @@ const BASIC_NAME = { W: 'Równina', U: 'Wyspa', B: 'Bagno', R: 'Góra', G: 'Las'
 
 let cat;
 let byId;
+let catalogIds = new Set();
 let catalogKey;
+let draftId = null;
+let saveTimer = null;
 let diff = 'medium';
 let first = 'human';
+let format = 'winston';
+let gridFirst = 'p1';
+let cobraUrl = '';
+try { cobraUrl = localStorage.getItem('mtg-cobra-url') || ''; } catch { /* podgląd bez zapisu */ }
+let importing = false;
 let setCode = 'afr';
+let decks = null;
+let seatOrder = ['human'];
+let seatAt = 0;
+let hands = null;
+let handSeat = 'human';
 let cube;
 let draft;
 let game;
 let screen = 'menu';
 let status = '';
 let selected = new Set();
-let basics = { W: 3, U: 3, B: 3, R: 3, G: 3 };
+let landPicks = {};
 let aim = null;
 let fast = false;
 let scratchKey = '';
 let scratch = { attackers: new Set(), pairs: [], blocker: null, bottom: new Set(), scry: null };
+let zoom = null;
 let pumping = false;
-let rngSeed = 1;
+let rngSeed = (Math.random() * 0x100000000) >>> 0;
 let plCards = {};
+const RARITY_KEYS = ['common', 'uncommon', 'rare', 'mythic'];
+const DEFAULT_RARITY_PCT = { common: 52, uncommon: 31, rare: 10, mythic: 7 };
+
+function loadRarityPct() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('mtg-rarity-pct') || '');
+    const out = {};
+    for (const key of RARITY_KEYS) {
+      const n = Number(raw?.[key]);
+      out[key] = Number.isFinite(n) && n >= 0 ? n : DEFAULT_RARITY_PCT[key];
+    }
+    return out;
+  } catch {
+    return { ...DEFAULT_RARITY_PCT };
+  }
+}
+
+let rarityPct = loadRarityPct();
 
 const h = (tag, attrs = {}, kids = []) => {
   const node = document.createElement(tag);
@@ -129,7 +173,7 @@ function miniImage(url, name, extraClass = '') {
   if (!url) return null;
   return h('img', {
     class: `mini${extraClass ? ` ${extraClass}` : ''}`,
-    src: url,
+    src: appUrl(url),
     alt: name || 'karta',
     loading: 'lazy',
     referrerpolicy: 'no-referrer',
@@ -145,11 +189,75 @@ function artNodes(def, faceIndex = 0) {
   return nodes.filter(Boolean);
 }
 
+const PIP_ORDER = { W: 0, U: 1, B: 2, R: 3, G: 4 };
+
+function colorRank(def) {
+  const letters = ['W', 'U', 'B', 'R', 'G'].filter((color) => (def?.colorIdentity || []).includes(color));
+  if (letters.length === 0) return [2, 0, ''];
+  if (letters.length === 1) return [0, PIP_ORDER[letters[0]], ''];
+  return [1, letters.length, letters.join('')];
+}
+
+function comparePoolCards(a, b) {
+  const ka = colorRank(a);
+  const kb = colorRank(b);
+  if (ka[0] !== kb[0]) return ka[0] - kb[0];
+  if (ka[1] !== kb[1]) return ka[1] - kb[1];
+  const len = Math.max(ka[2].length, kb[2].length);
+  for (let i = 0; i < len; i += 1) {
+    const da = PIP_ORDER[ka[2][i]] ?? 9;
+    const db = PIP_ORDER[kb[2][i]] ?? 9;
+    if (da !== db) return da - db;
+  }
+  return (a?.name || '').localeCompare(b?.name || '', 'en');
+}
+
+function curveBoard(ids, extraFor) {
+  const byCost = new Map();
+  for (const id of ids) {
+    const def = byId.get(id);
+    const cost = Math.max(0, Math.round(Number(def?.cmc) || 0));
+    if (!byCost.has(cost)) byCost.set(cost, []);
+    byCost.get(cost).push(id);
+  }
+  const costs = [...byCost.keys()].sort((a, b) => a - b);
+  return h('div', { class: 'curve' }, costs.map((cost) => {
+    const col = byCost.get(cost).sort((a, b) => comparePoolCards(byId.get(a), byId.get(b)));
+    return h('div', { class: 'curve-col', 'data-cost': String(cost) }, [
+      h('div', { class: 'cost' }, String(cost)),
+      h('div', { class: 'curve-stack' }, col.map((id) => cardNode(byId.get(id), extraFor ? extraFor(id) : {}))),
+    ]);
+  }));
+}
+
+function stackCurve() {
+  for (const stack of document.querySelectorAll('.curve-stack')) {
+    const cards = [...stack.children].filter((node) => node.classList.contains('card'));
+    for (let i = 1; i < cards.length; i += 1) {
+      const prev = cards[i - 1];
+      const head = prev.querySelector('header');
+      const keep = Math.ceil((head?.offsetHeight || 22) + 8);
+      cards[i].style.marginTop = `-${Math.max(0, prev.offsetHeight - keep)}px`;
+    }
+  }
+}
+
+function onZoom(info) {
+  return (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    zoom = info;
+    render();
+  };
+}
+
 function cardNode(def, extra = {}) {
   if (!def || extra.hidden) {
-    return h('article', { class: 'card back' }, [
+    return h('article', {
+      class: 'card back',
+      oncontextmenu: onZoom({ name: 'Zakryta karta', oracle: 'Tej karty jeszcze nie widziałeś.' }),
+    }, [
       h('header', {}, t('Zakryta karta')),
-      h('p', { class: 'oracle' }, t('Tej karty jeszcze nie widziałeś.')),
     ]);
   }
   const text = shown(def);
@@ -157,15 +265,13 @@ function cardNode(def, extra = {}) {
   const node = h('article', {
     class: `card ${colorOf(def)}${art.length ? ' has-art' : ''}${extra.on ? ' on' : ''}${extra.tapped ? ' tapped' : ''}`,
     onclick: extra.onclick,
+    oncontextmenu: onZoom({
+      defId: def.id,
+      pt: def.power != null ? `${def.power}/${def.toughness}` : (def.loyalty || ''),
+    }),
   }, [
     ...art,
     h('header', {}, [h('span', {}, text.name), pipNodes(def.manaCost)]),
-    h('div', { class: 'type' }, text.typeLine),
-    h('p', { class: 'oracle' }, text.oracle.slice(0, 420)),
-    h('footer', {}, [
-      h('span', {}, t(engineMark(def))),
-      h('span', { class: 'pt' }, def.power != null ? `${def.power}/${def.toughness}` : (def.loyalty || '')),
-    ]),
   ]);
   if (extra.tapped) node.append(h('b', { class: 'stamp' }, 'TAP'));
   return node;
@@ -175,10 +281,14 @@ function viewNode(view, onclick, extra = {}) {
   if (!view) return h('article', { class: 'card back' }, '—');
   const def = byId.get(view.defId);
   const marked = extra.on || (aim && legalAim(view.id)) || isNextTarget(view.id);
+  const pt = view.power != null ? `${view.power}/${view.toughness}` : (view.loyalty != null ? String(view.loyalty) : '');
   if (view.faceDown && view.name.startsWith('Zakryte')) {
-    return h('article', { class: `card back${marked ? ' on' : ''}`, onclick }, [
+    return h('article', {
+      class: `card back${marked ? ' on' : ''}`,
+      onclick,
+      oncontextmenu: onZoom({ name: view.name, typeLine: view.typeLine || '', oracle: view.text || '', pt, hidden: true }),
+    }, [
       h('header', {}, t(view.name)),
-      h('p', { class: 'oracle' }, t(view.text || '')),
     ]);
   }
   const text = shown(def);
@@ -187,18 +297,13 @@ function viewNode(view, onclick, extra = {}) {
   const node = h('article', {
     class: `card ${colorOf(def)} ${view.tapped ? 'tapped' : ''} ${marked ? 'on' : ''} ${art.length ? 'has-art' : ''}`,
     onclick,
+    oncontextmenu: onZoom({ defId: view.defId, faceIndex, pt, oracle: view.text || '' }),
   }, [
     ...art,
     h('header', {}, [h('span', {}, text.name || view.name), pipNodes(view.manaCost)]),
-    h('div', { class: 'type' }, text.typeLine || view.typeLine || ''),
-    h('p', { class: 'oracle' }, (text.oracle || view.text || '').slice(0, 420)),
-    h('footer', {}, [
-      h('span', {}, t(engineMark(def))),
-      h('span', { class: 'pt' }, view.power != null ? `${view.power}/${view.toughness}` : (view.loyalty ?? '')),
-    ]),
   ]);
   if (view.tapped) node.append(h('b', { class: 'stamp' }, 'TAP'));
-  if (view.attacking) node.append(h('div', { class: 'type' }, t('atakuje')));
+  if (view.attacking) node.append(h('div', { class: 'flag' }, t('atakuje')));
   return node;
 }
 
@@ -250,32 +355,365 @@ function pickStackTarget(id) {
 }
 
 function newMatch() {
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  saveNow();
+  draftId = null;
+  rememberLink();
   game = null;
   draft = null;
   cube = null;
+  decks = null;
+  hands = null;
+  seatOrder = ['human'];
+  seatAt = 0;
   screen = 'menu';
   aim = null;
   fast = false;
   status = '';
   selected = new Set();
-  basics = { W: 3, U: 3, B: 3, R: 3, G: 3 };
+  landPicks = {};
   render();
 }
 
+function sessionLink() {
+  const url = new URL(location.href);
+  url.searchParams.set('d', draftId);
+  url.hash = '';
+  return `${url.origin}${url.pathname}${url.search}`;
+}
+
+function rememberLink() {
+  const url = new URL(location.href);
+  if (draftId) url.searchParams.set('d', draftId);
+  else url.searchParams.delete('d');
+  const next = `${url.pathname}${url.search}`;
+  if (next !== `${location.pathname}${location.search}`) history.replaceState(null, '', next);
+}
+
+function ensureDraftId() {
+  if (draftId) return;
+  draftId = newDraftId();
+  rememberLink();
+}
+
+function currentSession() {
+  return {
+    catalogIds,
+    screen,
+    format,
+    gridFirst,
+    first,
+    diff,
+    setCode,
+    rngSeed,
+    status,
+    seatOrder,
+    seatAt,
+    handSeat,
+    cube,
+    draft,
+    decks,
+    hands,
+    landPicks,
+  };
+}
+
+function saveNow() {
+  if (!draftId || !cube) return;
+  const id = draftId;
+  const body = JSON.stringify(packSession(currentSession()));
+  fetch(appUrl(`api/draft/${id}`), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body,
+    keepalive: true,
+  }).catch(() => { /* kolejna zmiana zapisze jeszcze raz */ });
+}
+
+function scheduleSave() {
+  if (!draftId || !cube) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    saveNow();
+  }, 200);
+}
+
+function linkBox() {
+  if (!draftId) return null;
+  const href = sessionLink();
+  return h('div', { class: 'draft-link' }, [
+    h('span', {}, t('Link do tego draftu. Odświeżenie strony wraca w to samo miejsce.')),
+    h('input', {
+      id: 'draft-link',
+      type: 'text',
+      readonly: true,
+      value: href,
+      onclick: (event) => event.target.select(),
+    }),
+    h('button', { class: 'ghost', onclick: async () => {
+      const input = document.querySelector('#draft-link');
+      input?.select();
+      try { await navigator.clipboard.writeText(href); } catch { /* adres zostaje zaznaczony */ }
+    } }, t('Kopiuj')),
+  ]);
+}
+
+function restoreHands(saved) {
+  if (!saved) {
+    hands = null;
+    return;
+  }
+  if (!decks) decks = {};
+  hands = {};
+  for (const [seat, bag] of Object.entries(saved)) {
+    if (!decks[seat]) decks[seat] = new Set();
+    const built = buildInstances(seat);
+    hands[seat] = {
+      library: bag.library || [],
+      hand: bag.hand || [],
+      mulligans: bag.mulligans || 0,
+      mode: bag.mode === 'bottom' ? 'bottom' : 'keep',
+      bottom: new Set(bag.bottom || []),
+      byUid: new Map(built.instances.map((item) => [item.uid, item])),
+      plan: built.plan,
+    };
+  }
+}
+
+function applySnapshot(state) {
+  screen = state.screen;
+  format = state.format;
+  gridFirst = state.gridFirst;
+  first = state.first;
+  diff = state.diff;
+  setCode = state.setCode;
+  rngSeed = state.rngSeed;
+  status = state.status || '';
+  cube = state.cube;
+  draft = state.draft;
+  seatOrder = state.seatOrder;
+  seatAt = state.seatAt;
+  handSeat = state.handSeat;
+  decks = state.decks;
+  if ((screen === 'deck' || screen === 'hand') && !decks) {
+    decks = {};
+    for (const seat of seatOrder) decks[seat] = new Set();
+  }
+  if (decks?.[seatOrder[seatAt]]) selected = decks[seatOrder[seatAt]];
+  else selected = new Set();
+  landPicks = mergeLandPicks(state.landPicks, state.hands);
+  restoreHands(state.hands);
+  zoom = null;
+  aim = null;
+  game = null;
+}
+
+function generatedSize() {
+  return format === 'grid' ? 162 : 90;
+}
+
+function rarityPreviewText() {
+  const size = generatedSize();
+  try {
+    const targets = rarityTargets(rarityPct, size);
+    return `Z ${size} kart: pospolita ${targets.common}, niepospolita ${targets.uncommon}, rzadka ${targets.rare}, mityczna ${targets.mythic}.`;
+  } catch {
+    return 'Podaj proporcję większą od zera.';
+  }
+}
+
+function rememberRarityPct() {
+  try { localStorage.setItem('mtg-rarity-pct', JSON.stringify(rarityPct)); } catch { /* podgląd bez zapisu */ }
+}
+
+function rarityControls() {
+  return h('div', { class: 'rarity-pct' }, [
+    h('span', { class: 'label' }, t('Proporcje rzadkości')),
+    ...RARITY_KEYS.map((key) => h('label', {}, [
+      t(RARITY_NAME[key]),
+      h('input', {
+        type: 'number',
+        min: '0',
+        step: '1',
+        value: String(rarityPct[key]),
+        'aria-label': t(RARITY_NAME[key]),
+        oninput: (event) => {
+          const n = Number(event.target.value);
+          rarityPct[key] = Number.isFinite(n) && n >= 0 ? n : 0;
+          rememberRarityPct();
+          const node = document.querySelector('#rarity-preview');
+          if (node) node.textContent = t(rarityPreviewText());
+        },
+      }),
+    ])),
+    h('span', { id: 'rarity-preview', class: 'preview' }, t(rarityPreviewText())),
+  ]);
+}
+
+function optionList(pairs, current) {
+  return pairs.map(([id, name]) => {
+    const opt = h('option', { value: id }, t(name));
+    if (id === current) opt.selected = true;
+    return opt;
+  });
+}
+
+function formatNote(count) {
+  if (format !== 'grid') return `Winston draftuje całą kostkę: ${count} kart.`;
+  const packs = gridPackCount(count);
+  if (packs < 1) return 'Grid potrzebuje co najmniej 9 kart.';
+  if (packs < 18) return `Kostka ma ${count} kart, więc grid ma ${packs} siatek po 9, nie 18.`;
+  if (count > 162) return 'Grid weźmie 18 siatek, czyli 162 karty. Reszta kostki nie wchodzi do tego losowania.';
+  return 'Grid: 18 siatek po 9 kart.';
+}
+
+function weightHelp() {
+  if (format === 'grid') {
+    return 'Wagi procentowe. Nie muszą sumować się do 100. Przy 162 kartach udziały kolorów są przeskalowane z kostki 90: 14 na kolor, 10 wielokolorowych, 6 bezbarwnych, 4 lądy. Gdy w dodatku brakuje kart tej rzadkości, kostka uzupełnia brak i pisze o tym.';
+  }
+  return 'Wagi procentowe. Nie muszą sumować się do 100. Kolory zostają: 14 na kolor, 10 wielokolorowych, 6 bezbarwnych, 4 lądy. Gdy w dodatku brakuje kart tej rzadkości, kostka uzupełnia brak i pisze o tym.';
+}
+
+function cubeBlurb() {
+  if (cube?.imported) return 'Ta kostka pochodzi z CubeCobra. Lądy podstawowe dobierasz przy składaniu talii. Na starcie każdy kolor ma zero.';
+  if (format === 'grid') return 'Grid z jednego dodatku: 18 siatek po 9 kart. Udział kolorów jest taki jak w sprawiedliwej kostce 90 kart, tylko przeskalowany. Lądy podstawowe dobierasz przy składaniu talii. Na starcie każdy kolor ma zero.';
+  return 'Winston: trzy kupki. Kwoty: 14 na każdy kolor, 10 wielokolorowych, 6 bezbarwnych, 4 lądy inne niż podstawowe. Lądy podstawowe dobierasz przy składaniu talii. Na starcie każdy kolor ma zero.';
+}
+
+function freshSeed() {
+  rngSeed = (Math.random() * 0x100000000) >>> 0;
+  return rngSeed;
+}
+
+function reshuffleCube() {
+  if (cube?.imported) {
+    cube.cards = shuffle(cube.cards.slice(), mulberry32(freshSeed()));
+    render();
+    return;
+  }
+  bootCube();
+}
+
+function seatLabel(seat) {
+  if (seat === 'p1') return 'Gracz 1';
+  if (seat === 'p2') return 'Gracz 2';
+  if (seat === 'ai') return 'Komputer';
+  return 'Ty';
+}
+
 function bootCube() {
+  const size = generatedSize();
+  try {
+    rarityTargets(rarityPct, size);
+  } catch (err) {
+    status = err.message;
+    render();
+    return;
+  }
+  rememberRarityPct();
   rngSeed = (rngSeed + 1) % 100000;
-  cube = buildCube(cat.cards, mulberry32(rngSeed + 17), setCode);
+  cube = buildCube(cat.cards, mulberry32(rngSeed + 17), setCode, rarityPct, size);
+  cube.imported = false;
+  cube.format = format;
+  cube.name = CUBE_SETS[setCode];
   screen = 'cube';
   status = '';
   render();
 }
 
 function startDraft() {
+  if (cube && !cube.imported && cube.format) format = cube.format;
+  const rng = mulberry32(freshSeed());
+  if (format === 'grid') {
+    const starter = gridFirst === 'random' ? (Math.random() < 0.5 ? 'p1' : 'p2') : gridFirst;
+    try {
+      draft = createGrid(cube.cards.map((c) => c.id), starter, rng);
+    } catch (err) {
+      status = err.message;
+      render();
+      return;
+    }
+    screen = 'draft';
+    render();
+    return;
+  }
   const starter = first === 'random' ? (Math.random() < 0.5 ? 'human' : 'ai') : first;
   first = starter;
-  draft = createDraft(cube.cards.map((c) => c.id), starter, mulberry32(rngSeed + 99));
+  draft = createDraft(cube.cards.map((c) => c.id), starter, rng);
   screen = 'draft';
   pump();
+}
+
+function doGrid(line) {
+  const res = applyGrid(draft, line);
+  if (!res.ok) {
+    status = res.error;
+    render();
+    return;
+  }
+  status = '';
+  if (draft.done) openDeck();
+  else render();
+}
+
+function summarizeImported(defs) {
+  const summary = {
+    color: { W: 0, U: 0, B: 0, R: 0, G: 0, gold: 0, colorless: 0, land: 0 },
+    rarity: {},
+    total: defs.length,
+  };
+  for (const card of defs) {
+    const type = card.typeLine || '';
+    const ci = card.colorIdentity || [];
+    const key = /\bLand\b/.test(type) ? 'land' : ci.length === 0 ? 'colorless' : ci.length === 1 ? ci[0] : 'gold';
+    summary.color[key] += 1;
+    summary.rarity[card.rarity] = (summary.rarity[card.rarity] || 0) + 1;
+  }
+  return summary;
+}
+
+async function importCube() {
+  if (importing) return;
+  importing = true;
+  status = 'Pobieram kostkę…';
+  render();
+  try {
+    const res = await fetch(appUrl(`api/cube?url=${encodeURIComponent(cobraUrl)}`));
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'Nie udało się wczytać kostki.');
+    const defs = json.cards.map((card) => {
+      const baseId = String(card.id).replace(/#\d+$/, '');
+      const known = cat.byId.get(baseId);
+      const upper = (list) => (list || []).map((color) => String(color).toUpperCase());
+      const def = known
+        ? { ...known, id: card.id, image: known.image || card.image }
+        : parseCard(card);
+      def.colors = upper(def.colors);
+      def.colorIdentity = upper(def.colorIdentity);
+      if (!known) def.producedMana = upper(card.produced_mana);
+      if (card.image) def.image = def.image || card.image;
+      byId.set(def.id, def);
+      return def;
+    });
+    cube = {
+      cards: shuffle(defs, mulberry32(freshSeed())),
+      notes: [],
+      summary: summarizeImported(defs),
+      set: json.id,
+      name: json.name,
+      imported: true,
+      rarityRequest: null,
+    };
+    screen = 'cube';
+    status = '';
+  } catch (err) {
+    status = err.message;
+  } finally {
+    importing = false;
+    render();
+  }
 }
 
 function doDraft(choice) {
@@ -288,47 +726,227 @@ function doDraft(choice) {
   pump();
 }
 
+const BASIC_PL = { W: 'Równina', U: 'Wyspa', B: 'Bagno', R: 'Góra', G: 'Las' };
+
+const LAND_COLORS = ['W', 'U', 'B', 'R', 'G'];
+
+function emptyBasics() {
+  return { W: 0, U: 0, B: 0, R: 0, G: 0 };
+}
+
+function clampLand(value) {
+  const n = Math.floor(Number(value));
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(40, n);
+}
+
+function picksFor(seat) {
+  if (!landPicks[seat]) landPicks[seat] = emptyBasics();
+  return landPicks[seat];
+}
+
+function basicsFromHand(bag) {
+  const counts = emptyBasics();
+  for (const uid of [...(bag?.hand || []), ...(bag?.library || [])]) {
+    const match = /^b([WUBRG])(\d+)$/.exec(String(uid));
+    if (!match) continue;
+    counts[match[1]] = Math.max(counts[match[1]], Number(match[2]) + 1);
+  }
+  return counts;
+}
+
+function mergeLandPicks(saved, handsSaved) {
+  const out = {};
+  const seats = new Set([
+    ...Object.keys(saved || {}),
+    ...Object.keys(handsSaved || {}),
+    ...seatOrder,
+  ]);
+  for (const seat of seats) {
+    const counts = emptyBasics();
+    const fromHand = basicsFromHand(handsSaved?.[seat]);
+    for (const color of LAND_COLORS) {
+      counts[color] = Math.max(clampLand(saved?.[seat]?.[color]), fromHand[color]);
+    }
+    out[seat] = counts;
+  }
+  return out;
+}
+
 function openDeck() {
-  selected = new Set();
-  basics = { W: 3, U: 3, B: 3, R: 3, G: 3 };
+  seatOrder = format === 'grid' ? ['p1', 'p2'] : ['human'];
+  seatAt = 0;
+  decks = {};
+  landPicks = {};
+  for (const seat of seatOrder) {
+    decks[seat] = new Set();
+    landPicks[seat] = emptyBasics();
+  }
+  selected = decks[seatOrder[0]];
+  hands = null;
   screen = 'deck';
+  status = '';
   render();
 }
 
-function deckCount() {
-  return selected.size + Object.values(basics).reduce((s, n) => s + n, 0);
+function currentPlan() {
+  const cards = [...selected].map((id) => byId.get(id)).filter(Boolean);
+  return manualBasics(cards, picksFor(seatOrder[seatAt]));
 }
 
-function startGame() {
-  if (deckCount() < 40) {
-    status = 'Talia musi mieć co najmniej 40 kart.';
+function basicsLine(plan) {
+  const parts = LAND_COLORS
+    .filter((color) => plan.basics[color] > 0)
+    .map((color) => `${BASIC_PL[color]} ${plan.basics[color]}`);
+  if (!parts.length) return 'Wybrane lądy podstawowe: żadne.';
+  return `Wybrane lądy podstawowe: ${parts.join(', ')}.`;
+}
+
+function setLandCount(color, value) {
+  picksFor(seatOrder[seatAt])[color] = clampLand(value);
+  const plan = currentPlan();
+  const note = document.querySelector('#land-note');
+  const chosen = document.querySelector('#land-chosen');
+  const warn = document.querySelector('#land-warn');
+  if (note) note.textContent = plan.deckSize ? t(choiceNote(plan)) : '';
+  if (chosen) chosen.textContent = t(basicsLine(plan));
+  if (warn) warn.textContent = plan.deckSize > 40 ? t('Talia ma więcej niż 40 kart.') : '';
+  scheduleSave();
+}
+
+function landStepper() {
+  const seat = seatOrder[seatAt];
+  const picks = picksFor(seat);
+  const plan = currentPlan();
+  return h('div', { class: 'panel land-picks' }, [
+    h('h2', {}, t('Lądy podstawowe')),
+    h('p', { class: 'sub' }, t('Każdy kolor startuje od zera. Liczba przy „propozycja” pochodzi z tabeli Karstena i nie wchodzi do talii, dopóki jej nie ustawisz.')),
+    h('div', { class: 'row' }, LAND_COLORS.map((color) => h('label', { class: 'land-pick' }, [
+      basicLabel(color),
+      h('button', {
+        type: 'button',
+        class: 'ghost',
+        'aria-label': t(`Mniej: ${BASIC_PL[color]}`),
+        onclick: () => { picks[color] = Math.max(0, picks[color] - 1); render(); },
+      }, '−'),
+      h('input', {
+        type: 'number',
+        min: '0',
+        max: '40',
+        step: '1',
+        value: String(picks[color]),
+        'aria-label': basicLabel(color),
+        oninput: (event) => setLandCount(color, event.target.value),
+        onchange: (event) => {
+          setLandCount(color, event.target.value);
+          event.target.value = String(picks[color]);
+        },
+      }),
+      h('button', {
+        type: 'button',
+        class: 'ghost',
+        'aria-label': t(`Więcej: ${BASIC_PL[color]}`),
+        onclick: () => { picks[color] = Math.min(40, picks[color] + 1); render(); },
+      }, '+'),
+      plan.suggested[color] > 0 ? h('span', { class: 'hint' }, t(`propozycja ${plan.suggested[color]}`)) : null,
+    ]))),
+  ]);
+}
+
+function buildInstances(seat) {
+  const chosen = [...(decks[seat] || [])];
+  const cards = chosen.map((id) => byId.get(id)).filter(Boolean);
+  const plan = manualBasics(cards, picksFor(seat));
+  const instances = chosen.map((id, index) => ({ uid: `c${index}:${id}`, defId: id }));
+  for (const color of LAND_COLORS) {
+    for (let i = 0; i < (plan.basics[color] || 0); i += 1) {
+      instances.push({ uid: `b${color}${i}`, defId: `basic-${color}` });
+    }
+  }
+  return { instances, plan };
+}
+
+function freshHand(seat, rng) {
+  const built = buildInstances(seat);
+  const library = shuffle(built.instances.map((item) => item.uid), rng);
+  return {
+    library,
+    hand: library.splice(0, Math.min(7, library.length)),
+    mulligans: 0,
+    mode: 'keep',
+    bottom: new Set(),
+    byUid: new Map(built.instances.map((item) => [item.uid, item])),
+    plan: built.plan,
+  };
+}
+
+function openHands() {
+  hands = {};
+  seatOrder.forEach((seat, index) => {
+    hands[seat] = freshHand(seat, mulberry32((rngSeed + 400 + index * 97) >>> 0));
+  });
+  handSeat = seatOrder[0];
+  screen = 'hand';
+  status = '';
+  render();
+}
+
+function finishSeat() {
+  const lands = LAND_COLORS.reduce((sum, color) => sum + (picksFor(seatOrder[seatAt])[color] || 0), 0);
+  if (selected.size + lands === 0) {
+    status = 'Wybierz karty do talii.';
     render();
     return;
   }
-  const humanDeck = [...selected];
-  for (const [color, n] of Object.entries(basics)) {
-    for (let i = 0; i < n; i++) humanDeck.push(`basic-${color}`);
-  }
-  const side = draft.pools.human.filter((id) => !selected.has(id));
-  const ai = buildDeck(draft.pools.ai, byId, diff);
-  if (!catalogKey) catalogKey = registerCatalog(byId, cat.dungeons);
-  const chooser = other(first);
-  game = createGame({
-    catalogKey,
-    humanDeck,
-    aiDeck: ai.deck,
-    humanSide: side,
-    aiSide: ai.side,
-    starting: first,
-    chooseStart: true,
-    chooser,
-    seed: (rngSeed + 5) >>> 0,
-  });
-  aim = null;
-  fast = false;
-  screen = 'game';
   status = '';
-  pump();
+  if (seatAt < seatOrder.length - 1) {
+    seatAt += 1;
+    selected = decks[seatOrder[seatAt]];
+    render();
+    return;
+  }
+  openHands();
+}
+
+function redrawHand() {
+  hands[handSeat] = freshHand(handSeat, mulberry32((Math.random() * 0x100000000) >>> 0));
+  status = '';
+  render();
+}
+
+function mulliganHand() {
+  const bag = hands[handSeat];
+  if (!bag || bag.mode !== 'keep' || bag.mulligans >= 6) return;
+  bag.mulligans += 1;
+  const all = shuffle([...bag.hand, ...bag.library], mulberry32((Math.random() * 0x100000000) >>> 0));
+  bag.library = all;
+  bag.hand = bag.library.splice(0, Math.min(7, bag.library.length));
+  bag.mode = 'bottom';
+  bag.bottom = new Set();
+  status = `Odkładasz ${bag.mulligans} kart na spód.`;
+  render();
+}
+
+function confirmBottom() {
+  const bag = hands[handSeat];
+  const n = bag.mulligans;
+  if (bag.bottom.size !== n) {
+    status = `Odkładasz ${n} kart na spód.`;
+    render();
+    return;
+  }
+  const stay = [];
+  const down = [];
+  for (const uid of bag.hand) {
+    if (bag.bottom.has(uid)) down.push(uid);
+    else stay.push(uid);
+  }
+  bag.hand = stay;
+  bag.library.push(...down);
+  bag.mode = 'keep';
+  bag.bottom = new Set();
+  status = 'Zostawiasz tę rękę.';
+  render();
 }
 
 function act(action) {
@@ -357,6 +975,17 @@ function specsOf(effects) {
     if (effect.targets) specs.push(...effect.targets.filter((t) => t.kind !== 'self'));
   }
   return specs;
+}
+
+function playFromHand(id) {
+  if (game.pending || actor(game) !== 'human') return;
+  const face = faceOf(id);
+  if (face?.cycling && !face.spellEffects?.length && !face.isLand && game.objects[id].zone === 'hand') {
+    aim = { kind: 'permanent', id };
+    render();
+    return;
+  }
+  beginCast(id);
 }
 
 function beginCast(id) {
@@ -436,39 +1065,20 @@ async function pump() {
   pumping = true;
   try {
     let n = 0;
-    while (n++ < 80) {
+    while (n++ < 200) {
       render();
-      if (screen === 'draft') {
-        if (!draft || draft.done || draft.active !== 'ai') break;
-        const res = applyDraft(draft, chooseDraft(draft, byId, diff));
-        if (!res.ok) { status = res.error; break; }
-        if (draft.done) {
-          openDeck();
-          break;
-        }
-        await sleep(40);
-        continue;
+      if (screen !== 'draft' || format !== 'winston') break;
+      if (!draft || draft.done || draft.active !== 'ai') break;
+      await sleep(600);
+      if (screen !== 'draft' || format !== 'winston' || !draft || draft.done || draft.active !== 'ai') break;
+      const res = applyDraft(draft, chooseDraft(draft, byId, diff));
+      if (!res.ok) { status = res.error; break; }
+      render();
+      await sleep(800);
+      if (draft.done) {
+        openDeck();
+        break;
       }
-      if (screen !== 'game' || !game || game.gameOver) break;
-      const who = actor(game);
-      if (who === 'ai') {
-        let res = apply(game, 'ai', chooseAction(game, 'ai', diff));
-        if (!res.ok) res = apply(game, 'ai', fallback(game, 'ai'));
-        if (!res.ok) { status = res.error || 'Komputer nie ma ruchu.'; break; }
-        await sleep(30);
-        continue;
-      }
-      if (who === 'human' && fast && !stopForHuman()) {
-        const action = game.awaiting === 'attackers'
-          ? { type: 'attackers', ids: [] }
-          : game.awaiting === 'blockers'
-            ? { type: 'blockers', pairs: [] }
-            : { type: 'pass' };
-        const res = apply(game, 'human', action);
-        if (!res.ok) { fast = false; status = res.error; break; }
-        continue;
-      }
-      break;
     }
   } finally {
     pumping = false;
@@ -479,47 +1089,88 @@ async function pump() {
 function renderMenu() {
   return h('section', { class: 'panel' }, [
     h('h1', {}, 'Winston Cube'),
-    h('p', { class: 'sub' }, t('Dwie osoby, 90 kart z jednego dodatku, trzy kupki. Ty przeciwko komputerowi. Dodatki nigdy się nie mieszają.')),
+    h('p', { class: 'sub' }, t('Draft i składanie talii. Winston: 90 kart z jednego dodatku, Ty przeciwko komputerowi. Grid: dwie osoby przy jednym komputerze, do 18 siatek po 9 kart. Dodatki w losowaniu nigdy się nie mieszają. Kostkę można też wczytać z CubeCobra.')),
+    h('p', { class: 'sub' }, [
+      t('Gotowe talie Commandera z kolekcji. '),
+      h('a', { class: 'text-link', href: 'decki.html' }, t('Zobacz listy z miniaturami.')),
+    ]),
     h('div', { class: 'row' }, [
+      h('label', {}, t('Tryb')),
+      h('select', { onchange: (e) => { format = e.target.value; render(); } }, optionList([
+        ['winston', 'Winston'],
+        ['grid', 'Grid'],
+      ], format)),
       h('label', {}, t('Dodatek')),
       h('select', { onchange: (e) => { setCode = e.target.value; } }, Object.entries(CUBE_SETS).map(([id, name]) => {
         const opt = h('option', { value: id }, name);
         if (id === setCode) opt.selected = true;
         return opt;
       })),
-      h('label', {}, t('Trudność')),
-      h('select', { onchange: (e) => { diff = e.target.value; } }, DIFFS.map(([id, name]) => {
-        const opt = h('option', { value: id }, t(name));
-        if (id === diff) opt.selected = true;
-        return opt;
-      })),
+      format === 'winston' ? h('label', {}, t('Trudność')) : null,
+      format === 'winston' ? h('select', { onchange: (e) => { diff = e.target.value; } }, optionList(DIFFS, diff)) : null,
       h('label', {}, t('Kto draftuje pierwszy')),
-      h('select', { onchange: (e) => { first = e.target.value; } }, [
-        ['human', 'Ja'],
-        ['ai', 'Komputer'],
-        ['random', 'Losowo'],
-      ].map(([id, name]) => {
-        const opt = h('option', { value: id }, t(name));
-        if (id === first) opt.selected = true;
-        return opt;
-      })),
+      format === 'grid'
+        ? h('select', { onchange: (e) => { gridFirst = e.target.value; } }, optionList([
+          ['p1', 'Gracz 1'],
+          ['p2', 'Gracz 2'],
+          ['random', 'Losowo'],
+        ], gridFirst))
+        : h('select', { onchange: (e) => { first = e.target.value; } }, optionList([
+          ['human', 'Ja'],
+          ['ai', 'Komputer'],
+          ['random', 'Losowo'],
+        ], first)),
       h('button', { onclick: bootCube }, t('Ułóż kostkę')),
+      cube ? h('button', { class: 'ghost', onclick: () => {
+        if (!cube.imported && cube.format) format = cube.format;
+        screen = 'cube';
+        status = '';
+        render();
+      } }, t('Wróć do kostki')) : null,
     ]),
-    h('p', { class: 'note' }, t('Miniatury kart pochodzą ze Scryfalla. Tekst zasad zostaje na karcie, gdy obrazek się nie wczyta. Te dodatki nie mają polskiego druku, więc nazwa zostaje angielska, a typ i tekst są przekładem do czytania. Silnik czyta angielski tekst. Tekst kart © Wizards of the Coast.')),
+    rarityControls(),
+    h('p', { class: 'sub' }, t(weightHelp())),
+    h('div', { class: 'row' }, [
+      h('label', {}, 'CubeCobra'),
+      h('input', {
+        type: 'url',
+        value: cobraUrl,
+        placeholder: 'https://cubecobra.com/cube/list/…',
+        'aria-label': t('Link albo identyfikator kostki CubeCobra.'),
+        oninput: (event) => {
+          cobraUrl = event.target.value;
+          try { localStorage.setItem('mtg-cobra-url', cobraUrl); } catch { /* podgląd bez zapisu */ }
+        },
+      }),
+      h('button', { onclick: importCube, disabled: importing }, t('Wczytaj z CubeCobra')),
+    ]),
+    status ? h('p', { class: 'note' }, t(status)) : null,
+    h('p', { class: 'note' }, t('Miniatury kart są zapisane lokalnie (kopia ze Scryfalla). Prawy przycisk myszy otwiera powiększenie i tekst. Te dodatki nie mają polskiego druku, więc nazwa zostaje angielska, a typ i tekst są przekładem do czytania. Tekst kart © Wizards of the Coast.')),
   ]);
 }
 
 function renderCube() {
   const s = cube.summary;
+  const notes = cube.imported ? [formatNote(cube.cards.length)] : cube.notes;
+  const titleName = cube.name || CUBE_SETS[cube.set] || cube.set;
   return h('section', {}, [
     h('div', { class: 'top' }, [
       h('div', {}, [
-        h('h1', {}, t(`Kostka, 90 kart · ${CUBE_SETS[cube.set] || cube.set}`)),
-        h('p', { class: 'sub' }, t('Tylko ten dodatek. Kwoty: 14 na każdy kolor, 10 wielokolorowych, 6 bezbarwnych, 4 lądy inne niż podstawowe. Lądy podstawowe dochodzą dopiero przy składaniu talii.')),
+        h('h1', {}, t(`Kostka, ${cube.cards.length} kart · ${titleName}`)),
+        h('p', { class: 'sub' }, t(cubeBlurb())),
       ]),
       h('div', { class: 'row' }, [
-        h('button', { class: 'ghost', onclick: () => { screen = 'menu'; render(); } }, t('Inny dodatek')),
-        h('button', { class: 'ghost', onclick: bootCube }, t('Potasuj jeszcze raz')),
+        cube.imported
+          ? h('label', {}, t('Tryb'))
+          : h('span', {}, t(format === 'grid' ? 'Tryb: Grid' : 'Tryb: Winston')),
+        cube.imported
+          ? h('select', { onchange: (e) => { format = e.target.value; render(); } }, optionList([
+            ['winston', 'Winston'],
+            ['grid', 'Grid'],
+          ], format))
+          : null,
+        h('button', { class: 'ghost', onclick: () => { screen = 'menu'; status = ''; render(); } }, t(cube.imported ? 'Wróć' : 'Inny dodatek')),
+        h('button', { class: 'ghost', onclick: reshuffleCube }, t('Potasuj jeszcze raz')),
         h('button', { onclick: startDraft }, t('Zacznij draft')),
       ]),
     ]),
@@ -528,16 +1179,46 @@ function renderCube() {
       h('span', {}, `${t('wielokolor')}: ${s.color.gold}`),
       h('span', {}, `${t('bezbarwne')}: ${s.color.colorless}`),
       h('span', {}, `${t('lądy')}: ${s.color.land}`),
-      ...Object.entries(s.rarity).map(([k, n]) => h('span', {}, `${t(RARITY_NAME[k])}: ${n}`)),
+      ...Object.entries(s.rarity).map(([k, n]) => h('span', {}, `${t(RARITY_NAME[k] || k)}: ${n}`)),
+      cube.rarityRequest ? h('span', {}, t(`Proszono: pospolita ${cube.rarityRequest.common}, niepospolita ${cube.rarityRequest.uncommon}, rzadka ${cube.rarityRequest.rare}, mityczna ${cube.rarityRequest.mythic}.`)) : null,
     ]),
-    cube.notes.length ? h('div', { class: 'panel note' }, cube.notes.slice(0, 8).map((line) => t(line)).join(' ')) : null,
+    cube.imported ? null : rarityControls(),
+    cube.imported ? null : h('p', { class: 'sub' }, t(weightHelp())),
+    status ? h('p', { class: 'note' }, t(status)) : null,
+    notes.length ? h('div', { class: 'panel note' }, notes.slice(0, 8).map((line) => t(line)).join(' ')) : null,
     h('div', { class: 'panel cards' }, cube.cards.map((c) => cardNode(c))),
   ]);
 }
 
+function computerDecision(log) {
+  const out = [];
+  let pending = [];
+  for (let i = (log || []).length - 1; i >= 0; i--) {
+    const line = log[i];
+    if (line.startsWith('Ty ')) break;
+    if (line.startsWith('Komputer')) {
+      out.unshift(line, ...pending);
+      pending = [];
+      continue;
+    }
+    if (line.startsWith('Kupka ')) pending.unshift(line);
+    else pending = [];
+  }
+  return out;
+}
+
+function decisionPanel() {
+  const lines = computerDecision(draft.log);
+  if (!lines.length) return null;
+  return h('div', { class: 'panel decision', 'aria-live': 'polite' }, [
+    h('h2', {}, t('Decyzja komputera')),
+    ...lines.map((line) => h('p', {}, t(line))),
+  ]);
+}
+
 function renderDraft() {
-  const you = draft.active === 'human';
-  return h('section', {}, [
+  const you = draft.active === 'human' && !pumping;
+  return h('section', { class: 'draft' }, [
     h('div', { class: 'top' }, [
       h('div', {}, [
         h('h1', {}, you ? t('Twoja kolej przy kupkach') : t('Komputer ogląda kupki')),
@@ -545,6 +1226,7 @@ function renderDraft() {
       ]),
       h('div', {}, t(`Talia główna: ${draft.main.length}`)),
     ]),
+    decisionPanel(),
     h('div', { class: 'panel row' }, [0, 1, 2].map((index) => {
       const pile = draft.piles[index];
       const known = pileKnown(draft, 'human', index);
@@ -559,7 +1241,7 @@ function renderDraft() {
     ]) : null,
     h('div', { class: 'panel' }, [
       h('h2', {}, t(`Twoja pula (${draft.pools.human.length})`)),
-      h('div', { class: 'cards' }, draft.pools.human.map((id) => cardNode(byId.get(id)))),
+      curveBoard(draft.pools.human),
     ]),
     h('div', { class: 'panel' }, [
       h('h2', {}, t(`Pula komputera: ${draft.pools.ai.length}`)),
@@ -570,41 +1252,126 @@ function renderDraft() {
 }
 
 function renderDeck() {
-  const total = deckCount();
-  const lands = Object.values(basics).reduce((s, n) => s + n, 0);
-  return h('section', {}, [
+  const seat = seatOrder[seatAt];
+  const plan = currentPlan();
+  const picks = picksFor(seat);
+  const landTotal = LAND_COLORS.reduce((sum, color) => sum + picks[color], 0);
+  const deckTotal = selected.size + landTotal;
+  const last = seatAt >= seatOrder.length - 1;
+  const pool = draft.pools[seat] || [];
+  const main = [...selected];
+  const side = pool.filter((id) => !selected.has(id));
+  return h('section', { class: 'draft' }, [
     h('div', { class: 'top' }, [
       h('div', {}, [
-        h('h1', {}, t('Ułóż talię')),
-        h('p', { class: 'sub' }, t(`Minimum 40 kart. Teraz ${total}. Lądy podstawowe są bez limitu i nie wchodziły do kostki. Kliknij kartę, żeby dodać ją do talii albo z niej zdjąć.`)),
+        h('h1', {}, t(`Ułóż talię · ${seatLabel(seat)}`)),
+        h('p', { class: 'sub' }, t('Kliknij kartę na sideboardzie, a wskoczy do talii. Klik w talii odkłada ją z powrotem. Lądy podstawowe ustawiasz sam. Na starcie każdy kolor ma zero.')),
       ]),
       h('div', { class: 'row' }, [
         h('button', { class: 'ghost', onclick: newMatch }, t('Od nowa')),
-        h('button', { onclick: startGame, disabled: total < 40 }, t('Graj')),
+        h('button', {
+          onclick: finishSeat,
+          disabled: deckTotal === 0,
+        }, t(last ? 'Ręka startowa' : 'Talia gotowa — kolejny gracz')),
       ]),
     ]),
-    h('div', { class: 'panel row' }, Object.entries(BASIC_NAME).map(([color]) => h('span', { class: 'row' }, [
-      basicLabel(color),
-      h('button', { onclick: () => { basics[color] = Math.max(0, basics[color] - 1); render(); } }, '−'),
-      String(basics[color]),
-      h('button', { onclick: () => { basics[color] += 1; render(); } }, '+'),
-    ]))),
-    lands === 0 ? h('p', { class: 'note' }, t('W talii nie ma lądów. Da się tak zagrać, ale mana się nie pojawi.')) : null,
+    h('p', {}, t(`W talii głównej: ${selected.size} kart.`)),
+    h('p', { id: 'land-chosen' }, t(basicsLine(plan))),
+    plan.deckSize ? h('p', { id: 'land-note', class: 'sub' }, t(choiceNote(plan))) : h('p', { id: 'land-note', class: 'sub' }),
+    h('p', { id: 'land-warn', class: 'note' }, deckTotal > 40 ? t('Talia ma więcej niż 40 kart.') : ''),
+    landStepper(),
     h('div', { class: 'panel' }, [
-      h('h2', {}, t(`Talia bez lądów podstawowych (${selected.size})`)),
-      h('div', { class: 'cards' }, [...selected].map((id) => cardNode(byId.get(id), { on: true, onclick: () => { selected.delete(id); render(); } }))),
+      h('h2', {}, t(`Talia główna (${selected.size})`)),
+      curveBoard(main, (id) => ({ onclick: () => { selected.delete(id); render(); } })),
     ]),
     h('div', { class: 'panel' }, [
-      h('h2', {}, t('Pula')),
-      h('div', { class: 'cards' }, draft.pools.human.map((id) => cardNode(byId.get(id), {
-        on: selected.has(id),
-        onclick: () => {
-          if (selected.has(id)) selected.delete(id);
-          else selected.add(id);
+      h('h2', {}, t(`Sideboard (${side.length})`)),
+      curveBoard(side, (id) => ({ onclick: () => { selected.add(id); render(); } })),
+    ]),
+  ]);
+}
+
+function renderGrid() {
+  const lines = Object.fromEntries(gridLines(draft.grid).map((line) => [line.key, line]));
+  const lineButton = (key, label) => {
+    const count = lines[key]?.ids.length || 0;
+    return h('button', { onclick: () => doGrid(key), disabled: count === 0 }, t(`${label} · ${count}`));
+  };
+  const cells = [h('span')];
+  for (let col = 0; col < 3; col += 1) cells.push(lineButton(`c${col}`, `Weź kolumnę ${col + 1}`));
+  for (let row = 0; row < 3; row += 1) {
+    cells.push(lineButton(`r${row}`, `Weź rząd ${row + 1}`));
+    for (let col = 0; col < 3; col += 1) {
+      const id = draft.grid[row * 3 + col];
+      cells.push(id ? cardNode(byId.get(id)) : h('div', { class: 'grid-hole' }));
+    }
+  }
+  return h('section', { class: 'draft' }, [
+    h('div', { class: 'top' }, [
+      h('div', {}, [
+        h('h1', {}, t(`Siatka ${draft.packIndex + 1} z ${draft.packCount}. ${seatLabel(draft.active)} wybiera rząd albo kolumnę.`)),
+        h('p', { class: 'sub' }, t('Obie pule są jawne. Bierzesz cały rząd albo całą kolumnę. Druga osoba bierze rząd albo kolumnę z tego, co zostało. Reszta siatki odpada.')),
+      ]),
+      h('button', { class: 'ghost', onclick: newMatch }, t('Od nowa')),
+    ]),
+    status ? h('p', { class: 'note' }, t(status)) : null,
+    h('div', { class: 'grid-board' }, cells),
+    h('div', { class: 'panel' }, [
+      h('h2', {}, t(`Pula gracza 1: ${draft.pools.p1.length}`)),
+      curveBoard(draft.pools.p1),
+    ]),
+    h('div', { class: 'panel' }, [
+      h('h2', {}, t(`Pula gracza 2: ${draft.pools.p2.length}`)),
+      curveBoard(draft.pools.p2),
+    ]),
+    h('div', { class: 'panel log' }, draft.log.slice(-12).map((line) => h('div', {}, t(line)))),
+  ]);
+}
+
+function renderHand() {
+  const bag = hands[handSeat];
+  const picking = bag.mode === 'bottom';
+  return h('section', { class: 'draft' }, [
+    h('div', { class: 'top' }, [
+      h('div', {}, [
+        h('h1', {}, t('Ręka startowa')),
+        h('p', { class: 'sub' }, t('To nie jest partia. To tylko próbna ręka startowa.')),
+        h('p', { class: 'sub' }, t('London: zostawiasz albo tasujesz, dobierasz siedem i odkładasz tyle kart, ile razy już mulliganowałeś. Nie ma darmowego pierwszego mulligana.')),
+      ]),
+      h('div', { class: 'row' }, [
+        seatOrder.length > 1
+          ? h('select', { onchange: (event) => { handSeat = event.target.value; status = ''; render(); } }, seatOrder.map((seat) => {
+            const opt = h('option', { value: seat }, t(seatLabel(seat)));
+            if (seat === handSeat) opt.selected = true;
+            return opt;
+          }))
+          : null,
+        h('button', { class: 'ghost', onclick: newMatch }, t('Od nowa')),
+      ]),
+    ]),
+    h('h2', {}, t(`Ręka: ${seatLabel(handSeat)} · mulligany ${bag.mulligans}`)),
+    status ? h('p', { class: 'note' }, t(status)) : null,
+    picking ? h('p', {}, t(`Odkładasz ${bag.mulligans} kart na spód.`)) : null,
+    picking ? h('p', {}, t(`Zaznaczono ${bag.bottom.size}.`)) : null,
+    h('div', { class: 'cards' }, bag.hand.map((uid) => {
+      const def = byId.get(bag.byUid.get(uid)?.defId);
+      return cardNode(def, {
+        on: bag.bottom.has(uid),
+        onclick: picking ? () => {
+          if (bag.bottom.has(uid)) bag.bottom.delete(uid);
+          else bag.bottom.add(uid);
           render();
-        },
-      }))),
-    ]),
+        } : null,
+      });
+    })),
+    h('div', { class: 'row' }, picking
+      ? [h('button', { onclick: confirmBottom }, t('Potwierdź spód'))]
+      : [
+        h('button', { onclick: () => { status = 'Zostawiasz tę rękę.'; render(); } }, t('Zostaw')),
+        h('button', { class: 'ghost', onclick: mulliganHand, disabled: bag.mulligans >= 6 }, t('Mulligan')),
+        h('button', { class: 'ghost', onclick: redrawHand }, t('Losuj od nowa')),
+      ]),
+    bag.plan?.deckSize ? h('p', { class: 'sub' }, t(choiceNote(bag.plan))) : null,
   ]);
 }
 
@@ -924,16 +1691,9 @@ function renderGame() {
       ]),
       h('div', { class: 'hand' }, [
         h('h2', {}, t('Twoja ręka')),
-        h('div', { class: 'cards' }, you.hand.map((id) => viewNode(cardView(game, id, 'human'), () => {
-          if (game.pending || actor(game) !== 'human') return;
-          const face = faceOf(id);
-          if (face?.cycling && !face.spellEffects?.length && !face.isLand) {
-            aim = { kind: 'permanent', id };
-            render();
-            return;
-          }
-          beginCast(id);
-        }))),
+        h('div', { class: 'cards' }, you.hand.map((id) => viewNode(cardView(game, id, 'human'), () => playFromHand(id)))),
+        you.exile.some((id) => game.objects[id].impulse) ? h('h2', {}, t('Z wygnania, do końca tury')) : null,
+        h('div', { class: 'cards' }, you.exile.filter((id) => game.objects[id].impulse).map((id) => viewNode(cardView(game, id, 'human'), () => playFromHand(id)))),
       ]),
     ]),
     h('aside', { class: 'dock' }, [
@@ -952,35 +1712,86 @@ function renderGame() {
   ]);
 }
 
+function zoomLayer() {
+  if (!zoom) return null;
+  const def = zoom.defId ? byId.get(zoom.defId) : null;
+  const text = def ? shown(def) : {
+    name: t(zoom.name || 'Zakryta karta'),
+    typeLine: t(zoom.typeLine || ''),
+    oracle: t(zoom.oracle || ''),
+  };
+  const oracle = zoom.hidden ? t(zoom.oracle || '') : (text.oracle || t(zoom.oracle || ''));
+  const pt = zoom.pt || (def?.power != null ? `${def.power}/${def.toughness}` : (def?.loyalty || ''));
+  const faceIndex = zoom.faceIndex || 0;
+  const frontArt = def?.imageLarge || def?.image;
+  const backArt = def?.imageBackLarge || def?.imageBack;
+  const image = zoom.hidden ? null : (faceIndex === 1 && backArt ? backArt : frontArt);
+  const imageBack = zoom.hidden ? null : (faceIndex === 1 ? frontArt : backArt);
+  const close = () => { zoom = null; render(); };
+  return h('div', { class: 'zoom', onclick: close, oncontextmenu: (event) => { event.preventDefault(); close(); } }, [
+    image ? h('div', { class: 'zoom-art' }, [
+      h('img', { src: appUrl(image), alt: text.name || 'karta' }),
+      imageBack ? h('img', { class: 'second', src: appUrl(imageBack), alt: '' }) : null,
+    ]) : h('div', { class: 'zoom-art back' }, text.name),
+    h('div', { class: 'zoom-sheet' }, [
+      h('h2', {}, text.name),
+      text.typeLine ? h('p', { class: 'zoom-type' }, text.typeLine) : null,
+      oracle ? h('p', { class: 'zoom-oracle' }, oracle) : null,
+      pt ? h('p', { class: 'zoom-pt' }, pt) : null,
+      def ? h('p', { class: 'sub' }, t(engineMark(def))) : null,
+      h('p', { class: 'sub' }, t('Kliknięcie, prawy przycisk albo Esc zamyka podgląd.')),
+    ]),
+  ]);
+}
+
 function render() {
+  if (cube) ensureDraftId();
   document.documentElement.lang = getLang();
   const root = h('div', { class: 'shell' });
   root.append(langBar());
+  root.append(h('p', { class: 'fan-note' }, [
+    t('Narzędzie fanowskie. Tekst i grafiki kart © Wizards of the Coast. Zapis draftu to lista kart pod losowym linkiem, bez konta.'),
+    ' ',
+    h('a', { href: 'https://lubisoftware.com/polityka-prywatnosci.html' }, t('Polityka prywatności')),
+    ' · ',
+    h('a', { href: 'https://lubisoftware.com/blog/narzedzie-dla-hobby-kiedys-i-dzis.html' }, t('Skąd to się wzięło')),
+  ]));
+  if (draftId && cube) root.append(linkBox());
   if (!cat) {
     root.append(h('p', {}, t('Wczytuję karty…')));
   } else if (screen === 'menu') root.append(renderMenu());
   else if (screen === 'cube') root.append(renderCube());
-  else if (screen === 'draft') root.append(renderDraft());
+  else if (screen === 'draft') root.append(format === 'grid' ? renderGrid() : renderDraft());
   else if (screen === 'deck') root.append(renderDeck());
-  else if (screen === 'game') root.append(renderGame());
+  else if (screen === 'hand') root.append(renderHand());
+  const preview = zoomLayer();
+  if (preview) root.append(preview);
   app.replaceChildren(root);
+  stackCurve();
+  if (cube) scheduleSave();
 }
 
 document.addEventListener('keydown', (event) => {
+  if (zoom && (event.key === 'Escape' || event.code === 'Space')) {
+    event.preventDefault();
+    zoom = null;
+    render();
+    return;
+  }
   if (event.code !== 'Space') return;
   if (event.target.closest('input, textarea, select')) return;
   event.preventDefault();
-  if (screen === 'draft' && draft?.active === 'human' && !draft.done) doDraft('pass');
-  if (screen === 'game' && game && actor(game) === 'human' && !game.pending && !game.awaiting) act({ type: 'pass' });
+  if (screen === 'draft' && format === 'winston' && draft?.active === 'human' && !draft.done && !pumping) doDraft('pass');
 });
 
-const response = await fetch('/data/cards.json');
+const response = await fetch(appUrl('data/cards.json'));
 const data = await response.json();
 cat = catalogFromData(data);
 byId = cat.byId;
 for (const basic of cat.basics) byId.set(basic.id, basic);
+catalogIds = new Set(byId.keys());
 try {
-  const pl = await fetch('/data/pl.json');
+  const pl = await fetch(appUrl('data/pl.json'));
   if (pl.ok) {
     const json = await pl.json();
     plCards = json.cards || {};
@@ -988,4 +1799,20 @@ try {
 } catch {
   plCards = {};
 }
+const requestedDraft = new URLSearchParams(location.search).get('d');
+if (requestedDraft && isDraftId(requestedDraft)) {
+  try {
+    const saved = await fetch(appUrl(`api/draft/${requestedDraft}`));
+    const json = await saved.json().catch(() => ({}));
+    if (!saved.ok) throw new Error(json.error || 'Nie ma zapisu pod tym linkiem.');
+    applySnapshot(unpackSession(json, byId));
+    draftId = requestedDraft;
+  } catch (err) {
+    status = err.message || 'Nie ma zapisu pod tym linkiem.';
+    draftId = null;
+    rememberLink();
+  }
+}
 render();
+window.addEventListener('pagehide', () => saveNow());
+if (screen === 'draft' && format === 'winston' && draft?.active === 'ai' && !draft.done) pump();

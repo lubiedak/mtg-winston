@@ -248,10 +248,16 @@ function castScore(state, player, face, diff) {
   return score;
 }
 
+function castableIds(state, player) {
+  return state.players[player].hand.concat(
+    state.players[player].exile.filter((id) => state.objects[id]?.impulse),
+  );
+}
+
 function considerCasts(state, player, diff, instantsOnly) {
   let best = null;
   let bestScore = 0.45;
-  for (const id of state.players[player].hand) {
+  for (const id of castableIds(state, player)) {
     const obj = state.objects[id];
     const face = faceOfCard(state, obj);
     if (!face || (face.isLand && !face.isCreature)) continue;
@@ -391,7 +397,7 @@ function choosePriority(state, player, diff) {
   const mine = state.active === player;
   const main = mine && state.stack.length === 0 && (state.step === 'precombat' || state.step === 'postcombat');
   if (main && state.players[player].landsPlayed < 1) {
-    const land = state.players[player].hand.find((id) => chars(state, state.objects[id]).isLand);
+    const land = castableIds(state, player).find((id) => chars(state, state.objects[id]).isLand);
     if (land) {
       const action = { type: 'playLand', id: land };
       if (tryAction(state, player, action)) return action;

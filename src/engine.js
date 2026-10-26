@@ -810,6 +810,11 @@ function finishCleanup(state) {
     obj.crewed = false;
   }
   emptyMana(state);
+  for (const p of PLAYERS) {
+    for (const id of state.players[p].exile) {
+      if (state.objects[id]) state.objects[id].impulse = false;
+    }
+  }
   const queued = state.triggerQueue.length;
   stabilize(state);
   if (state.pending || state.gameOver) return;
@@ -1175,12 +1180,14 @@ function sorcerySpeed(state, player) {
 
 function playLand(state, player, id) {
   const obj = state.objects[id];
-  if (!obj || obj.zone !== 'hand' || obj.owner !== player) return { ok: false, error: 'Tej karty nie ma w ręce.' };
+  const fromImpulse = obj?.zone === 'exile' && obj.impulse && obj.owner === player;
+  if (!obj || obj.owner !== player || (obj.zone !== 'hand' && !fromImpulse)) return { ok: false, error: 'Tej karty nie ma w ręce.' };
   if (!sorcerySpeed(state, player)) return { ok: false, error: 'Ląd zagrywa się w swojej głównej fazie, przy pustym stosie.' };
   if (state.players[player].landsPlayed >= 1 && !extraLand(state, player)) return { ok: false, error: 'W tej turze ląd już wszedł.' };
   const c = chars(state, obj);
   if (!c.isLand) return { ok: false, error: 'To nie jest ląd.' };
   state.players[player].landsPlayed += 1;
+  obj.impulse = false;
   move(state, id, 'battlefield', player);
   applyEntersTapped(state, obj);
   log(state, `${who(player)} zagrywa ląd: ${nameOf(state, obj)}.`);
@@ -1210,7 +1217,8 @@ function applyEntersTapped(state, obj) {
 
 function castSpell(state, player, action) {
   const obj = state.objects[action.id];
-  if (!obj || (obj.zone !== 'hand' && obj.zone !== 'graveyard')) return { ok: false, error: 'Nie można rzucić tej karty.' };
+  const fromImpulse = obj?.zone === 'exile' && obj.impulse && obj.owner === player;
+  if (!obj || ((obj.zone !== 'hand' && obj.zone !== 'graveyard') && !fromImpulse)) return { ok: false, error: 'Nie można rzucić tej karty.' };
   const def = defOf(state, obj.defId);
   const faceIndex = action.face || 0;
   const face = def.faces[faceIndex];
@@ -1232,6 +1240,7 @@ function castSpell(state, player, action) {
   if (!paid) return { ok: false, error: 'Nie starcza many.' };
   commitPay(state, player, paid);
   obj.face = faceIndex;
+  obj.impulse = false;
   obj.cast = { impending: !!action.impending, kicker: !!action.kicker, x, modes: action.modes || [] };
   obj.zone = 'stack';
   removeFromZone(state, obj);
@@ -1252,8 +1261,14 @@ function castSpell(state, player, action) {
     faceIndex,
   };
   if (!targetsOk(state, item, player)) {
-    obj.zone = 'hand';
-    state.players[player].hand.push(obj.id);
+    if (fromImpulse) {
+      obj.zone = 'exile';
+      obj.impulse = true;
+      state.players[player].exile.push(obj.id);
+    } else {
+      obj.zone = 'hand';
+      state.players[player].hand.push(obj.id);
+    }
     refund(state, player, paid);
     return { ok: false, error: 'Nielegalne cele.' };
   }
@@ -1373,8 +1388,93 @@ function autoPay(state, player, cost) {
       sources.push({ id, index, ab });
     });
   }
-  const limit = sources.slice(0, 14);
-  return searchPay(state.players[player].mana.slice(), limit, cost, state.players[player].life, []);
+  return payWithSources(state.players[player].mana.slice(), sources, cost, state.players[player].life);
+}
+
+function blankCost() {
+  return { generic: 0, pips: [], hybrid: [], phyrexian: [], x: false, c: 0, text: '' };
+}
+
+function sourceFlexibility(src) {
+  if (src.ab.produce?.any) return 6;
+  if (src.ab.produce?.choice) return src.ab.produce.choice.length;
+  return 1;
+}
+
+function dropsOfColor(src, color) {
+  return produceDrops(src.ab.produce).find((drops) => drops.some((drop) => drop.color === color && !drop.restrict)) || null;
+}
+
+function genericDrops(src) {
+  return produceDrops(src.ab.produce).find((drops) => drops.some((drop) => !drop.restrict)) || null;
+}
+
+/**
+ * Płaci koszt istniejącą maną i zdolnościami lądów.
+ * Najpierw symbole kolorów, najsztywniejszym źródłem. Bez wykładniczego szukania,
+ * które zawieszało grę, gdy many nie starczało.
+ */
+function payWithSources(pool, sources, cost, life) {
+  const have = pool.slice();
+  const left = sources.slice();
+  const used = [];
+  let lifePaid = 0;
+  let lifeLeft = life;
+  const takeFloating = (partial, allowLife) => {
+    const paid = spend(have, partial, allowLife ? lifeLeft : 0);
+    if (!paid.ok) return false;
+    have.splice(0, have.length, ...paid.pool);
+    lifePaid += paid.lifePaid || 0;
+    lifeLeft -= paid.lifePaid || 0;
+    return true;
+  };
+  const use = (src, drops) => {
+    const index = left.indexOf(src);
+    if (index >= 0) left.splice(index, 1);
+    used.push({ ...src, drops });
+    have.push(...drops);
+  };
+  const payOne = (partial, color) => {
+    if (takeFloating(partial, false)) return true;
+    const ranked = left
+      .map((src) => ({ src, drops: color ? dropsOfColor(src, color) : genericDrops(src) }))
+      .filter((row) => row.drops)
+      .sort((a, b) => sourceFlexibility(a.src) - sourceFlexibility(b.src));
+    if (!ranked.length) return false;
+    use(ranked[0].src, ranked[0].drops);
+    return takeFloating(partial, false);
+  };
+
+  for (const color of cost.pips || []) {
+    if (!payOne({ ...blankCost(), pips: [color] }, color)) return null;
+  }
+  for (let i = 0; i < (cost.c || 0); i += 1) {
+    if (!payOne({ ...blankCost(), c: 1 }, 'C')) return null;
+  }
+  let generic = cost.generic || 0;
+  for (const [a, b] of cost.hybrid || []) {
+    const partial = { ...blankCost(), hybrid: [[a, b]] };
+    if (takeFloating(partial, false)) continue;
+    const colors = [a, b].filter((side) => !/^\d+$/.test(side));
+    let paid = false;
+    for (const color of colors) {
+      if (payOne(partial, color)) { paid = true; break; }
+    }
+    if (paid) continue;
+    const numbers = [a, b].filter((side) => /^\d+$/.test(side)).map(Number);
+    if (!numbers.length) return null;
+    generic += Math.min(...numbers);
+  }
+  for (const color of cost.phyrexian || []) {
+    const partial = { ...blankCost(), phyrexian: [color] };
+    if (payOne(partial, color)) continue;
+    if (!takeFloating(partial, true)) return null;
+  }
+  while (generic > 0) {
+    if (!payOne({ ...blankCost(), generic: 1 }, null)) return null;
+    generic -= 1;
+  }
+  return { pool: have, lifePaid, used };
 }
 
 function produceDrops(produce) {
@@ -1391,21 +1491,6 @@ function produceDrops(produce) {
     return [drops];
   }
   return [[]];
-}
-
-function searchPay(pool, sources, cost, life, used, depth = 0) {
-  const paid = spend(pool, cost, life);
-  if (paid.ok) return { pool: paid.pool, lifePaid: paid.lifePaid, used, added: pool };
-  if (!sources.length || depth > 14) return null;
-  const [src, ...rest] = sources;
-  const skipped = searchPay(pool, rest, cost, life, used, depth + 1);
-  if (skipped) return skipped;
-  for (const drops of produceDrops(src.ab.produce)) {
-    const next = pool.concat(drops);
-    const hit = searchPay(next, rest, cost, life, used.concat([{ ...src, drops }]), depth + 1);
-    if (hit) return hit;
-  }
-  return null;
 }
 
 function commitPay(state, player, paid) {
@@ -1668,14 +1753,15 @@ function noteUnparsed(state, item) {
   const lines = (item.unparsed || []).filter(Boolean);
   if (!lines.length) return;
   log(state, `Silnik nie rozegrał fragmentu „${item.description}”: ${lines[0].slice(0, 180)}`);
-  if (item.controller === 'human') {
-    state.pending = {
-      player: 'human',
-      kind: 'unparsed',
-      text: lines.join(' '),
-      sourceId: item.sourceId,
-    };
-  }
+  const didSomething = (item.effects || []).length > 0 || (item.chosen || []).length > 0;
+  const entered = item.objectId && state.objects[item.objectId]?.zone === 'battlefield';
+  if (didSomething || entered || item.controller !== 'human') return;
+  state.pending = {
+    player: 'human',
+    kind: 'unparsed',
+    text: lines.join(' '),
+    sourceId: item.sourceId,
+  };
 }
 
 function targetsStillLegal(state, item) {

@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { mulberry32 } from '../src/util.js';
 import { parseCard } from '../src/parse.js';
 import { spend, parseManaCost, addMana } from '../src/mana.js';
-import { buildCube } from '../src/cube.js';
+import { buildCube, rarityTargets } from '../src/cube.js';
 import { createDraft, applyDraft, pileKnown } from '../src/winston.js';
 import { catalogFromData } from '../src/catalog.js';
 import { apply, actor, chars, createGame, registerCatalog } from '../src/engine.js';
@@ -116,6 +116,51 @@ test('mana: kolor, hybryda, phyrexian i ogólna', () => {
   assert.equal(spend(addMana([], 'R'), parseManaCost('{W}')).ok, false);
 });
 
+test('płatność many kończy się od razu, a rozpoznany fragment nie zatrzymuje gry', () => {
+  const forest = card({ id: 'basic-G', name: 'Forest', type_line: 'Basic Land — Forest', basic: true, color_identity: ['G'] });
+  const tower = card({
+    id: 'tower', name: 'Tower', type_line: 'Land',
+    oracle_text: '{T}: Add one mana of any color.',
+  });
+  const bear = card({
+    id: 'bear', name: 'Bear', mana_cost: '{1}{G}', cmc: 2, type_line: 'Creature — Bear',
+    oracle_text: 'Whenever Bear attacks, you may pay {1}. If you do, it gets +1/+1 until end of turn.',
+    power: '2', toughness: '2', colors: ['G'],
+  });
+  const blue = card({
+    id: 'blue', name: 'Blue Spell', mana_cost: '{U}', cmc: 1, type_line: 'Instant',
+    oracle_text: 'Draw a card.', colors: ['U'],
+  });
+  const ramp = card({
+    id: 'ramp', name: 'Ramp', mana_cost: '{G}', cmc: 1, type_line: 'Sorcery',
+    oracle_text: 'Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.',
+    colors: ['G'],
+  });
+  assert.ok(ramp.faces[0].spellEffects.some((effect) => effect.op === 'searchLand'));
+  const forests = Array.from({ length: 20 }, () => 'basic-G');
+  const state = boot([forest, tower, bear, blue, ramp], ['bear', 'blue', 'ramp', 'tower', ...forests], forests);
+  passUntil(state, 'precombat');
+  for (let i = 0; i < 16; i += 1) toBoard(state, 'human', 'basic-G');
+  const blueId = takeToHand(state, 'human', 'blue');
+  const started = Date.now();
+  const missed = apply(state, 'human', { type: 'cast', id: blueId, targets: [], modes: [] });
+  assert.equal(missed.ok, false);
+  assert.match(missed.error, /many/);
+  assert.ok(Date.now() - started < 200, `płatność trwała ${Date.now() - started} ms`);
+  toBoard(state, 'human', 'tower');
+  const paid = apply(state, 'human', { type: 'cast', id: blueId, targets: [], modes: [] });
+  assert.equal(paid.ok, true, paid.error);
+  assert.equal(apply(state, 'human', { type: 'pass' }).ok, true);
+  assert.equal(apply(state, 'ai', { type: 'pass' }).ok, true);
+  const bearId = takeToHand(state, 'human', 'bear');
+  const castBear = apply(state, 'human', { type: 'cast', id: bearId, targets: [], modes: [] });
+  assert.equal(castBear.ok, true, castBear.error);
+  assert.equal(apply(state, 'human', { type: 'pass' }).ok, true);
+  assert.equal(apply(state, 'ai', { type: 'pass' }).ok, true);
+  assert.equal(state.objects[bearId].zone, 'battlefield');
+  assert.equal(state.pending, null);
+});
+
 test('Winston: pełne spasowanie dokłada po karcie i daje kartę w ciemno', () => {
   const ids = Array.from({ length: 90 }, (_, i) => `c${i}`);
   const draft = createDraft(ids, 'human', mulberry32(1));
@@ -178,8 +223,57 @@ test('kostka ma 90 kart i nie jest jednokolorowa', () => {
     }
     assert.equal(cube.summary.color.gold, 10, set);
     assert.equal(cube.summary.color.land, 4, set);
-    const pictured = cube.cards.filter((c) => typeof c.image === 'string' && c.image.includes('scryfall.io'));
+    const pictured = cube.cards.filter((c) => typeof c.image === 'string' && c.image.startsWith('/art/'));
     assert.equal(pictured.length, 90, `${set} miniatury ${pictured.length}`);
+    const sample = statSync(new URL(`../public${pictured[0].image}`, import.meta.url));
+    assert.ok(sample.size > 500, pictured[0].image);
+    assert.equal(cube.rarityRequest, null, set);
+  }
+});
+
+test('kostka losuje według podanych proporcji rzadkości', () => {
+  assert.deepEqual(
+    rarityTargets({ common: 52, uncommon: 31, rare: 10, mythic: 7 }),
+    { common: 47, uncommon: 28, rare: 9, mythic: 6 },
+  );
+  assert.deepEqual(
+    rarityTargets({ common: 1, uncommon: 1, rare: 1, mythic: 1 }),
+    { common: 23, uncommon: 23, rare: 22, mythic: 22 },
+  );
+  assert.throws(() => rarityTargets({ common: 0, uncommon: 0, rare: 0, mythic: 0 }), /proporcję/);
+
+  const data = JSON.parse(readFileSync(new URL('../data/cards.json', import.meta.url)));
+  const { cards } = catalogFromData(data);
+  const fair = buildCube(cards, mulberry32(7), 'stx');
+  const weighted = buildCube(cards, mulberry32(7), 'stx', { common: 52, uncommon: 31, rare: 10, mythic: 7 });
+  assert.deepEqual(weighted.summary.rarity, { common: 47, uncommon: 28, rare: 9, mythic: 6 });
+  assert.equal(weighted.summary.color.gold, 10);
+  assert.equal(weighted.summary.color.land, 4);
+  assert.equal(weighted.cards.length, 90);
+  assert.ok(weighted.cards.every((card) => card.set === 'stx'));
+
+  const rares = buildCube(cards, mulberry32(3), 'stx', { common: 0, uncommon: 0, rare: 100, mythic: 0 });
+  assert.equal(rares.summary.rarity.rare, 47);
+  assert.ok(rares.summary.rarity.rare > fair.summary.rarity.rare);
+  assert.equal(rares.cards.length, 90);
+  assert.equal(new Set(rares.cards.map((card) => card.id)).size, 90);
+  for (const color of ['W', 'U', 'B', 'R', 'G']) {
+    assert.ok(rares.summary.color[color] >= 12, color);
+  }
+  assert.equal(rares.summary.color.gold, 10);
+  assert.equal(rares.summary.color.land, 4);
+  assert.ok(rares.notes.some((line) => line.startsWith('Proporcje rzadkości')));
+
+  const split = buildCube(cards, mulberry32(5), 'afr', { common: 0, uncommon: 0, rare: 50, mythic: 50 });
+  assert.equal(split.summary.rarity.mythic, 20);
+  assert.equal(split.summary.rarity.rare, 45);
+  assert.equal(split.summary.rarity.common + split.summary.rarity.uncommon, 25);
+  assert.equal(split.cards.length, 90);
+  assert.ok(split.cards.every((card) => card.set === 'afr'));
+  assert.equal(split.summary.color.gold, 10);
+  assert.equal(split.summary.color.land, 4);
+  for (const color of ['W', 'U', 'B', 'R', 'G']) {
+    assert.ok(split.summary.color[color] >= 12, color);
   }
 });
 

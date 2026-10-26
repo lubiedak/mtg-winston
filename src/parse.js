@@ -653,13 +653,13 @@ function effectsCombatTrick(c) {
 }
 
 function effectsSearch(c) {
-  if (/^search your library for a basic land card, put it onto the battlefield tapped, then shuffle$/i.test(c)) {
+  if (/^search your library for a basic land card, put it onto the battlefield tapped(?:, then shuffle)?$/i.test(c)) {
     return [{ op: 'searchLand', to: 'battlefield', tapped: true }];
   }
-  if (/^search your library for a basic land card, reveal it, put it into your hand, then shuffle$/i.test(c)) {
+  if (/^search your library for a basic land card, reveal it, put it into your hand(?:, then shuffle)?$/i.test(c)) {
     return [{ op: 'searchLand', to: 'hand', tapped: false }];
   }
-  if (/^search your library for a basic (Plains|Island|Swamp|Mountain|Forest) card, reveal it, put it into your hand, then shuffle$/i.test(c)) {
+  if (/^search your library for a basic (Plains|Island|Swamp|Mountain|Forest) card, reveal it, put it into your hand(?:, then shuffle)?$/i.test(c)) {
     const m = c.match(/basic (Plains|Island|Swamp|Mountain|Forest)/i);
     return [{ op: 'searchLand', to: 'hand', tapped: false, basic: m[1] }];
   }
@@ -1264,6 +1264,8 @@ export function parseCard(card) {
     plName: card.pl_name || null,
     image: card.image || null,
     imageBack: card.image_back || null,
+    imageLarge: card.image_large || null,
+    imageBackLarge: card.image_back_large || null,
   };
 }
 
